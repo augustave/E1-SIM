@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTV-3X Blackswift — Conceptual & Technical Drawings</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0a0f;
+  color: #c0c0c8;
+}
+
+/* Concept section */
+#concept-section {
+  background: #0a0a0f;
+  padding: 40px 20px 50px;
+  text-align: center;
+}
+#concept-section h2 {
+  font-size: 13px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #404050;
+  margin-bottom: 30px;
+  font-weight: 400;
+}
+#conceptCanvas {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+/* Tooltip */
+#tooltip {
+  position: fixed;
+  background: rgba(12, 12, 20, 0.95);
+  border: 1px solid rgba(80, 80, 110, 0.4);
+  padding: 10px 14px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #e0e0e8;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+  max-width: 280px;
+  backdrop-filter: blur(8px);
+}
+#tooltip .tt-label {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+#tooltip .tt-desc {
+  color: #8888a0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #2a2a3a, transparent);
+}
+
+/* Orthographic section */
+#ortho-section {
+  background: #f8f8f5;
+  padding: 40px 20px 30px;
+  text-align: center;
+}
+#ortho-section h2 {
+  font-size: 13px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 30px;
+  font-weight: 400;
+}
+#orthoContainer {
+  overflow: hidden;
+  cursor: grab;
+  border: 1px solid #ddd;
+  background: #fff;
+  max-width: 1400px;
+  margin: 0 auto;
+  border-radius: 2px;
+  position: relative;
+}
+#orthoContainer:active { cursor: grabbing; }
+#orthoSvg {
+  display: block;
+  transform-origin: 0 0;
+}
+.zoom-controls {
+  margin-top: 12px;
+  text-align: center;
+}
+.zoom-controls button {
+  background: #e8e8e4;
+  border: 1px solid #ccc;
+  padding: 5px 14px;
+  margin: 0 3px;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 2px;
+  font-family: 'Courier New', monospace;
+}
+.zoom-controls button:hover { background: #ddd; }
+.zoom-controls span {
+  color: #666;
+  font-size: 12px;
+  margin: 0 8px;
+  font-family: 'Courier New', monospace;
+}
+</style>
+</head>
+<body>
+
+<section id="concept-section">
+  <h2>Boeing Phantom Works &mdash; HTV-3X Blackswift Concept</h2>
+  <canvas id="conceptCanvas" width="1400" height="800"></canvas>
+  <div id="tooltip">
+    <div class="tt-label"></div>
+    <div class="tt-desc"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="ortho-section">
+  <h2>Technical Orthographic Views &mdash; Three-View Drawing</h2>
+  <div id="orthoContainer">
+    <svg id="orthoSvg" xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000"></svg>
+  </div>
+  <div class="zoom-controls">
+    <button id="zoomOut">&minus;</button>
+    <span id="zoomLevel">100%</span>
+    <button id="zoomIn">+</button>
+    <button id="zoomReset">Reset</button>
+  </div>
+</section>
+
+<script>
+// ================================================================
+// PROJECTION UTILITIES
+// ================================================================
+
+const YAW = -135 * Math.PI / 180;
+const DEPTH_COMPRESS = 0.32; // High-angle: heavy depth compression
+const COS_Y = Math.cos(YAW), SIN_Y = Math.sin(YAW);
+
+function project3D(x, y, z) {
+  const xr = x * COS_Y - y * SIN_Y;
+  const yr = x * SIN_Y + y * COS_Y;
+  return [xr, yr * DEPTH_COMPRESS - z * 0.95];
+}
+
+// ================================================================
+// AIRCRAFT GEOMETRY (body: x=fwd, y=right/stbd, z=up)
+// Length = 100 units, span ~45, max height ~6
+// ================================================================
+
+// Dorsal surface outline
+const outline = [
+  // Nose (spatulate flat edge)
+  [100, -2, 0.8],
+  [100, 2, 0.8],
+  // Starboard leading edge
+  [97, 5, 0.5],
+  [92, 8, 0.35],
+  [85, 11.5, 0.2],
+  [78, 14.5, 0.1],
+  [70, 17, 0],
+  [62, 19, 0],
+  [54, 20.5, 0],
+  [46, 21.5, 0],
+  [38, 22.2, 0],
+  [32, 22.5, 0],
+  // Starboard trailing edge
+  [27, 22, 0],
+  [22, 20.5, 0],
+  [17, 18.5, 0],
+  [12, 16.5, 0],
+  [8, 14.5, 0],
+  [4, 12.5, 0],
+  [1, 11, 0],
+  // Tail
+  [0, 0, 0.5],
+  // Port trailing edge
+  [1, -11, 0],
+  [4, -12.5, 0],
+  [8, -14.5, 0],
+  [12, -16.5, 0],
+  [17, -18.5, 0],
+  [22, -20.5, 0],
+  [27, -22, 0],
+  // Port wing tip
+  [32, -22.5, 0],
+  [38, -22.2, 0],
+  [46, -21.5, 0],
+  [54, -20.5, 0],
+  [62, -19, 0],
+  [70, -17, 0],
+  [78, -14.5, 0.1],
+  [85, -11.5, 0.2],
+  [92, -8, 0.35],
+  [97, -5, 0.5],
+  // Close to nose
+  [100, -2, 0.8],
+];
+
+// Dorsal spine ridge
+const spine = [
+  [100, 0, 1.2], [95, 0, 2.0], [88, 0, 3.2], [80, 0, 4.4],
+  [72, 0, 5.2], [64, 0, 5.7], [56, 0, 6.0], [48, 0, 5.7],
+  [40, 0, 5.2], [32, 0, 4.5], [24, 0, 3.8], [16, 0, 3.2],
+  [8, 0, 2.8], [0, 0, 2.5],
+];
+
+// Fuselage half-widths at each spine station
+const fuseW = [2, 3.5, 5.5, 7, 8, 9, 9.5, 9, 8, 7, 6, 5, 4, 3.5];
+
+// V-tail fins
+const vtL = [[14,-6,3.5],[4,-6,3.2],[2,-11,8.5],[9,-10.5,9.0]];
+const vtR = [[14,6,3.5],[4,6,3.2],[2,11,8.5],[9,10.5,9.0]];
+
+// ================================================================
+// CANVAS SETUP
+// ================================================================
+
+const cvs = document.getElementById('conceptCanvas');
+const ctx = cvs.getContext('2d');
+const dpr = window.devicePixelRatio || 1;
+const CW = 1400, CH = 800;
+cvs.width = CW * dpr; cvs.height = CH * dpr;
+cvs.style.width = CW + 'px'; cvs.style.height = CH + 'px';
+ctx.scale(dpr, dpr);
+
+const SC = 9.2; // World-to-canvas scale — fill the frame
+const OX = CW * 0.56, OY = CH * 0.54; // Canvas origin offset
+
+function toC(x, y, z) {
+  const [px, py] = project3D(x, y, z);
+  return [OX + px * SC, OY + py * SC];
+}
+
+// Smooth closed path through projected points
+function smoothClosed(ctx, pts) {
+  const n = pts.length;
+  if (n < 3) return;
+  const mx = (pts[0][0] + pts[1][0]) / 2;
+  const my = (pts[0][1] + pts[1][1]) / 2;
+  ctx.moveTo(mx, my);
+  for (let i = 1; i < n; i++) {
+    const nx = (pts[i][0] + pts[(i+1)%n][0]) / 2;
+    const ny = (pts[i][1] + pts[(i+1)%n][1]) / 2;
+    ctx.quadraticCurveTo(pts[i][0], pts[i][1], nx, ny);
+  }
+  ctx.quadraticCurveTo(pts[0][0], pts[0][1], mx, my);
+}
+
+// Smooth open path
+function smoothOpen(ctx, pts) {
+  if (pts.length < 2) return;
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const nx = (pts[i][0] + pts[i+1][0]) / 2;
+    const ny = (pts[i][1] + pts[i+1][1]) / 2;
+    ctx.quadraticCurveTo(pts[i][0], pts[i][1], nx, ny);
+  }
+  const last = pts[pts.length - 1];
+  ctx.lineTo(last[0], last[1]);
+}
+
+// ================================================================
+// CONCEPT RENDERING
+// ================================================================
+
+function render() {
+  const o2d = outline.map(p => toC(p[0], p[1], p[2]));
+  const sp2d = spine.map(p => toC(p[0], p[1], p[2]));
+
+  // -- Background --
+  ctx.fillStyle = '#08080d';
+  ctx.fillRect(0, 0, CW, CH);
+
+  // Singular high-intensity cold light source from top-right
+  const bg = ctx.createRadialGradient(CW*0.82, CH*0.08, 0, CW*0.82, CH*0.08, CW*0.7);
+  bg.addColorStop(0, 'rgba(35,50,75,0.18)');
+  bg.addColorStop(0.3, 'rgba(25,35,55,0.1)');
+  bg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, CW, CH);
+
+  // Faint background stars
+  ctx.fillStyle = 'rgba(180,190,220,0.25)';
+  const seed = [137,283,419,547,661,773,883,991,59,163,271,389,503,617,739,853,67,179,293,401];
+  for (let i = 0; i < seed.length; i++) {
+    const sx = (seed[i] * 7 + i * 193) % CW;
+    const sy = (seed[i] * 11 + i * 157) % CH;
+    const r = 0.3 + (i % 3) * 0.3;
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Vignette
+  const vig = ctx.createRadialGradient(CW/2, CH/2, CW*0.25, CW/2, CH/2, CW*0.72);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.45)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, CW, CH);
+
+  // -- Drop shadow --
+  ctx.save();
+  ctx.translate(10, 14);
+  ctx.beginPath(); smoothClosed(ctx, o2d); ctx.closePath();
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.filter = 'blur(25px)';
+  ctx.fill();
+  ctx.filter = 'none';
+  ctx.restore();
+
+  // -- Silhouette fill --
+  ctx.beginPath(); smoothClosed(ctx, o2d); ctx.closePath();
+  // Gradient from lit starboard (top-right) to shadowed port (bottom-left)
+  const gFill = ctx.createLinearGradient(OX+300, OY-300, OX-350, OY+300);
+  gFill.addColorStop(0, '#404050');   // Lit face — matte charcoal, slightly lifted
+  gFill.addColorStop(0.25, '#343440');
+  gFill.addColorStop(0.5, '#2a2a34');  // Mid — deep iron grey
+  gFill.addColorStop(0.75, '#202028');
+  gFill.addColorStop(1, '#161620');   // Shadow side — near black
+  ctx.fillStyle = gFill;
+  ctx.fill();
+
+  // -- Fuselage bulge: volumetric radial lighting along spine --
+  // Two-pass: first a broad ambient volume, then tight specular ridges
+  ctx.save();
+  ctx.beginPath(); smoothClosed(ctx, o2d); ctx.closePath(); ctx.clip();
+  // Pass 1: broad volume — conveys 3D mass under top-right cold light
+  for (let i = 0; i < spine.length - 1; i++) {
+    const s = spine[i], w = fuseW[i], z = s[2];
+    const [cx, cy] = toC(s[0], 0, z);
+    const [ex, ey] = toC(s[0], w, z * 0.2);
+    const rad = Math.sqrt((ex-cx)**2 + (ey-cy)**2) * 1.4;
+    // Shift light center toward starboard (top-right light source)
+    const [lx, ly] = toC(s[0], w * 0.35, z * 0.8);
+    const gr = ctx.createRadialGradient(lx, ly, 0, cx, cy, rad);
+    const a = 0.12 * (z / 6);
+    gr.addColorStop(0, `rgba(70,72,88,${a})`);
+    gr.addColorStop(0.35, `rgba(55,55,68,${a*0.6})`);
+    gr.addColorStop(0.7, `rgba(38,38,48,${a*0.2})`);
+    gr.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gr;
+    ctx.fillRect(cx - rad*1.2, cy - rad*1.2, rad*2.4, rad*2.4);
+  }
+  // Pass 2: shadow-side darkening (port/bottom-left) for depth
+  for (let i = 0; i < spine.length - 1; i++) {
+    const s = spine[i], w = fuseW[i], z = s[2];
+    const [cx, cy] = toC(s[0], 0, z);
+    const [sx2, sy2] = toC(s[0], -w * 0.5, z * 0.3);
+    const rad = Math.sqrt((sx2-cx)**2 + (sy2-cy)**2) * 1.1;
+    const gr = ctx.createRadialGradient(sx2, sy2, 0, cx, cy, rad);
+    const a = 0.08 * (z / 6);
+    gr.addColorStop(0, `rgba(8,8,14,${a})`);
+    gr.addColorStop(0.6, `rgba(10,10,16,${a*0.3})`);
+    gr.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gr;
+    ctx.fillRect(cx - rad, cy - rad, rad*2, rad*2);
+  }
+  ctx.restore();
+
+  // -- Panel lines (clipped) --
+  ctx.save();
+  ctx.beginPath(); smoothClosed(ctx, o2d); ctx.closePath(); ctx.clip();
+
+  // Longitudinal ribs
+  ctx.strokeStyle = 'rgba(60,60,76,0.38)';
+  ctx.lineWidth = 0.4;
+  for (let yb = -21; yb <= 21; yb += 3.5) {
+    ctx.beginPath();
+    for (let xb = 0; xb <= 100; xb += 1.5) {
+      const [sx, sy] = toC(xb, yb, 0);
+      xb === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+  }
+
+  // Lateral frames
+  for (let xb = 8; xb <= 96; xb += 7) {
+    ctx.beginPath();
+    for (let yb = -23; yb <= 23; yb += 0.8) {
+      const [sx, sy] = toC(xb, yb, 0);
+      yb === -23 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+  }
+
+  // Diagonal heat-shield tiles (asymmetric)
+  ctx.strokeStyle = 'rgba(55,55,70,0.28)';
+  ctx.lineWidth = 0.35;
+  for (let k = -35; k <= 135; k += 10) {
+    ctx.beginPath();
+    let started = false;
+    for (let t = -24; t <= 24; t += 0.8) {
+      const xb = k + t * 0.55;
+      if (xb < -2 || xb > 102) continue;
+      const [sx, sy] = toC(xb, t, 0);
+      started ? ctx.lineTo(sx, sy) : (ctx.moveTo(sx, sy), started = true);
+    }
+    ctx.stroke();
+  }
+
+  // Circular access hatches
+  ctx.strokeStyle = 'rgba(70,70,85,0.32)';
+  ctx.lineWidth = 0.4;
+  [[75,-4,1.4],[60,6,1.1],[48,-8,0.9],[52,9,0.7],[38,-5,1.2],[72,8,1.0],[82,-7,0.8],[42,12,0.6],[65,-12,0.7]].forEach(([xb,yb,r]) => {
+    const [sx,sy] = toC(xb, yb, 0);
+    ctx.beginPath(); ctx.arc(sx, sy, r*SC*0.12, 0, Math.PI*2); ctx.stroke();
+  });
+
+  // Rectangular hatches
+  [[86,-5,3,1.4],[66,4,2.4,1],[42,-3,2,1.1],[55,7,1.6,0.9],[30,4,2.2,0.7],[78,10,1.8,0.8]].forEach(([xb,yb,w,h]) => {
+    const c = [
+      toC(xb-w/2, yb-h/2, 0), toC(xb+w/2, yb-h/2, 0),
+      toC(xb+w/2, yb+h/2, 0), toC(xb-w/2, yb+h/2, 0),
+    ];
+    ctx.beginPath();
+    c.forEach((p,i) => i===0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
+    ctx.closePath(); ctx.stroke();
+  });
+
+  ctx.restore();
+
+  // -- Feathered hatching (wing-body blend) --
+  ctx.save();
+  ctx.beginPath(); smoothClosed(ctx, o2d); ctx.closePath(); ctx.clip();
+  ctx.lineWidth = 0.45;
+  for (let xb = 20; xb <= 88; xb += 1.8) {
+    // Port blend
+    ctx.strokeStyle = `rgba(42,42,55,${0.08 + Math.random()*0.06})`;
+    ctx.beginPath();
+    const [a1,b1] = toC(xb, -5 - Math.random(), 0);
+    const [a2,b2] = toC(xb + 0.8, -13 - Math.random()*3, 0);
+    ctx.moveTo(a1,b1); ctx.lineTo(a2,b2); ctx.stroke();
+    // Starboard blend
+    ctx.beginPath();
+    const [c1,d1] = toC(xb, 5 + Math.random(), 0);
+    const [c2,d2] = toC(xb + 0.8, 13 + Math.random()*3, 0);
+    ctx.moveTo(c1,d1); ctx.lineTo(c2,d2); ctx.stroke();
+  }
+  ctx.restore();
+
+  // -- Heavy leading edge strokes --
+  ctx.beginPath(); smoothClosed(ctx, o2d); ctx.closePath();
+  ctx.strokeStyle = '#0c0c14';
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
+
+  // Bright outer edge (shockwave attachment zone)
+  ctx.beginPath(); smoothClosed(ctx, o2d); ctx.closePath();
+  ctx.strokeStyle = 'rgba(60,65,80,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // -- V-tail fins --
+  drawVTail(vtL, false);
+  drawVTail(vtR, true);
+
+  // -- Dorsal spine highlight (thermal hardening specular) --
+  ctx.save();
+  // Outer bloom — soft volumetric glow
+  ctx.beginPath(); smoothOpen(ctx, sp2d);
+  ctx.strokeStyle = 'rgba(140,150,190,0.08)';
+  ctx.lineWidth = 12;
+  ctx.stroke();
+  // Mid glow
+  ctx.beginPath(); smoothOpen(ctx, sp2d);
+  const sg = ctx.createLinearGradient(sp2d[0][0], sp2d[0][1], sp2d[sp2d.length-1][0], sp2d[sp2d.length-1][1]);
+  sg.addColorStop(0, 'rgba(160,170,200,0.45)');
+  sg.addColorStop(0.2, 'rgba(200,210,240,0.7)');
+  sg.addColorStop(0.4, 'rgba(225,232,255,0.85)');
+  sg.addColorStop(0.55, 'rgba(210,218,248,0.75)');
+  sg.addColorStop(0.75, 'rgba(170,180,210,0.45)');
+  sg.addColorStop(1, 'rgba(130,140,170,0.25)');
+  ctx.strokeStyle = sg;
+  ctx.lineWidth = 3.2;
+  ctx.stroke();
+  // Inner bright core — tight specular
+  ctx.beginPath(); smoothOpen(ctx, sp2d);
+  ctx.strokeStyle = 'rgba(245,248,255,0.5)';
+  ctx.lineWidth = 1.0;
+  ctx.stroke();
+  // Hot-core hairline (wave-particle rendering of light on thermal surface)
+  ctx.beginPath(); smoothOpen(ctx, sp2d);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 0.4;
+  ctx.stroke();
+  ctx.restore();
+
+  // -- Starboard leading edge specular (light-facing shockwave boundary) --
+  ctx.save();
+  ctx.beginPath();
+  const stbdLE = [[97,5,0.5],[92,8,0.35],[85,11.5,0.2],[78,14.5,0.1],[70,17,0],[62,19,0],[54,20.5,0],[46,21.5,0]];
+  const stbdProj = stbdLE.map(p => toC(p[0],p[1],p[2]));
+  smoothOpen(ctx, stbdProj);
+  // Bloom
+  ctx.strokeStyle = 'rgba(120,135,180,0.06)';
+  ctx.lineWidth = 14;
+  ctx.stroke();
+  // Glow
+  ctx.beginPath(); smoothOpen(ctx, stbdProj);
+  ctx.strokeStyle = 'rgba(140,155,200,0.18)';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  // Core
+  ctx.beginPath(); smoothOpen(ctx, stbdProj);
+  const leGrad = ctx.createLinearGradient(stbdProj[0][0], stbdProj[0][1], stbdProj[stbdProj.length-1][0], stbdProj[stbdProj.length-1][1]);
+  leGrad.addColorStop(0, 'rgba(190,200,240,0.45)');
+  leGrad.addColorStop(0.4, 'rgba(170,180,220,0.35)');
+  leGrad.addColorStop(1, 'rgba(130,140,180,0.15)');
+  ctx.strokeStyle = leGrad;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // -- Nose specular highlight (razor-flat cleaving edge, high-mach thermal) --
+  ctx.save();
+  const nL = toC(100, -2.5, 0.9);
+  const nR = toC(100, 2.5, 0.9);
+  // Wide bloom — scattered light from thermal edge
+  ctx.beginPath(); ctx.moveTo(nL[0],nL[1]); ctx.lineTo(nR[0],nR[1]);
+  ctx.strokeStyle = 'rgba(120,140,200,0.04)';
+  ctx.lineWidth = 28;
+  ctx.stroke();
+  // Mid bloom
+  ctx.beginPath(); ctx.moveTo(nL[0],nL[1]); ctx.lineTo(nR[0],nR[1]);
+  ctx.strokeStyle = 'rgba(140,160,210,0.1)';
+  ctx.lineWidth = 14;
+  ctx.stroke();
+  // Glow
+  ctx.beginPath(); ctx.moveTo(nL[0],nL[1]); ctx.lineTo(nR[0],nR[1]);
+  ctx.strokeStyle = 'rgba(180,195,235,0.3)';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  // Core specular
+  ctx.beginPath(); ctx.moveTo(nL[0],nL[1]); ctx.lineTo(nR[0],nR[1]);
+  ctx.strokeStyle = 'rgba(220,230,255,0.75)';
+  ctx.lineWidth = 2.0;
+  ctx.stroke();
+  // Hot hairline
+  ctx.beginPath(); ctx.moveTo(nL[0],nL[1]); ctx.lineTo(nR[0],nR[1]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+  ctx.restore();
+
+  // -- Decals --
+  drawDecals();
+}
+
+function drawVTail(pts, isRight) {
+  const p = pts.map(v => toC(v[0], v[1], v[2]));
+  ctx.save();
+  ctx.beginPath();
+  p.forEach((v,i) => i===0 ? ctx.moveTo(v[0],v[1]) : ctx.lineTo(v[0],v[1]));
+  ctx.closePath();
+
+  const g = ctx.createLinearGradient(p[3][0],p[3][1], p[1][0],p[1][1]);
+  if (isRight) {
+    g.addColorStop(0, '#48484f');
+    g.addColorStop(1, '#28282e');
+  } else {
+    g.addColorStop(0, '#303038');
+    g.addColorStop(1, '#1c1c22');
+  }
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  ctx.strokeStyle = '#131318';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Leading edge highlight (light-facing side)
+  if (isRight) {
+    ctx.beginPath();
+    ctx.moveTo(p[0][0],p[0][1]); ctx.lineTo(p[3][0],p[3][1]);
+    ctx.strokeStyle = 'rgba(100,115,150,0.15)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p[0][0],p[0][1]); ctx.lineTo(p[3][0],p[3][1]);
+    ctx.strokeStyle = 'rgba(130,140,170,0.45)';
+    ctx.lineWidth = 0.9;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Shadow cast onto wing
+  ctx.save();
+  ctx.beginPath(); smoothClosed(ctx, outline.map(q => toC(q[0],q[1],q[2]))); ctx.closePath(); ctx.clip();
+  const shadow = pts.map(v => toC(v[0], v[1] + (isRight ? 2 : -2), 0));
+  ctx.beginPath();
+  shadow.forEach((v,i) => i===0 ? ctx.moveTo(v[0],v[1]) : ctx.lineTo(v[0],v[1]));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDecals() {
+  // Compute axis angle on canvas
+  const noseC = toC(100, 0, 1);
+  const tailC = toC(0, 0, 0.5);
+  const axAng = Math.atan2(tailC[1] - noseC[1], tailC[0] - noseC[0]);
+
+  // Port bow: "3X" + three chevrons — ghost white
+  ctx.save();
+  const d1 = toC(78, -13, 0);
+  ctx.translate(d1[0], d1[1]);
+  ctx.rotate(axAng + Math.PI); // Nose-ward direction
+  ctx.font = 'bold 32px "Courier New", monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.11)';
+  ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '4px';
+  ctx.fillText('3X', 0, 0);
+  // Chevrons — staggered right-pointing
+  ctx.font = 'bold 24px "Courier New", monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillText('\u203A', 68, 0);
+  ctx.fillText('\u203A', 82, 0);
+  ctx.fillText('\u203A', 96, 0);
+  ctx.restore();
+
+  // Starboard aft wing: "HTV-3X" — tactical grey
+  ctx.save();
+  const d2 = toC(22, 15, 0);
+  ctx.translate(d2[0], d2[1]);
+  ctx.rotate(axAng + Math.PI + 0.12); // Slight wing sweep alignment
+  ctx.font = '13px "Courier New", monospace';
+  ctx.fillStyle = 'rgba(130,130,148,0.16)';
+  ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '3px';
+  ctx.fillText('HTV-3X', 0, 0);
+  ctx.restore();
+}
+
+// ================================================================
+// TOOLTIP HIT REGIONS
+// ================================================================
+
+const regions = [
+  { name:'Spatulate Nose', desc:'Flattened duck-bill cleaving edge — hypersonic shockwave attachment point. Carbon-carbon thermal hardened.', xMin:95, xMax:101, yMin:-4, yMax:4 },
+  { name:'Dorsal Spine', desc:'Central longitudinal aerodynamic ridge — thermal hardening zone. Peak height at 56% chord.', xMin:20, xMax:95, yMin:-4, yMax:4 },
+  { name:'Port Leading Edge', desc:'~75° sweep — high-temperature carbon-carbon composite. Shockwave boundary layer.', xMin:50, xMax:97, yMin:-23, yMax:-7 },
+  { name:'Starboard Leading Edge', desc:'Optimized for Mach 6+ wave-riding. RAM-coated radar-absorbent surface.', xMin:50, xMax:97, yMin:7, yMax:23 },
+  { name:'Port Wing', desc:'Blended wing-body delta — stealth planform with heat-shield tile paneling.', xMin:8, xMax:50, yMin:-23, yMax:-5 },
+  { name:'Starboard Wing', desc:'Asymmetric geometric heat-shield panels — carbon-carbon composite skin.', xMin:8, xMax:50, yMin:5, yMax:23 },
+  { name:'Port V-Tail', desc:'Canted ~35° outward — all-moving stabilator for hypersonic flight control.', xMin:1, xMax:15, yMin:-13, yMax:-5 },
+  { name:'Starboard V-Tail', desc:'Twin V-tail configuration — minimizes radar cross-section and structural mass.', xMin:1, xMax:15, yMin:5, yMax:13 },
+  { name:'Aft Section', desc:'Combined-cycle propulsion bay — turbine-based combined cycle (TBCC) engine integration.', xMin:-1, xMax:8, yMin:-6, yMax:6 },
+];
+
+const ttEl = document.getElementById('tooltip');
+const ttLbl = ttEl.querySelector('.tt-label');
+const ttDsc = ttEl.querySelector('.tt-desc');
+
+function ptInPoly(x, y, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi,yi] = poly[i], [xj,yj] = poly[j];
+    if (((yi > y) !== (yj > y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi)) inside = !inside;
+  }
+  return inside;
+}
+
+cvs.addEventListener('mousemove', e => {
+  const r = cvs.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  let hit = null;
+  for (const rg of regions) {
+    const corners = [
+      toC(rg.xMin, rg.yMin, 0), toC(rg.xMax, rg.yMin, 0),
+      toC(rg.xMax, rg.yMax, 0), toC(rg.xMin, rg.yMax, 0),
+    ];
+    if (ptInPoly(mx, my, corners)) { hit = rg; break; }
+  }
+  if (hit) {
+    ttLbl.textContent = hit.name;
+    ttDsc.textContent = hit.desc;
+    ttEl.style.opacity = '1';
+    ttEl.style.left = (e.clientX + 16) + 'px';
+    ttEl.style.top = (e.clientY - 10) + 'px';
+  } else {
+    ttEl.style.opacity = '0';
+  }
+});
+cvs.addEventListener('mouseleave', () => ttEl.style.opacity = '0');
+
+// ================================================================
+// ORTHOGRAPHIC VIEWS (SVG)
+// ================================================================
+
+function svgNS(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function buildOrtho() {
+  const svg = document.getElementById('orthoSvg');
+  const S = 4.8; // Scale
+
+  // Defs: arrow markers, grid pattern
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  ['aEnd','aStart'].forEach((id,i) => {
+    const m = svgNS('marker', {
+      id, viewBox:'0 0 10 10', refX: i===0?'10':'0', refY:'5',
+      markerWidth:'5', markerHeight:'5', orient:'auto',
+    });
+    m.appendChild(svgNS('path', { d: i===0?'M0 0L10 5L0 10':'M10 0L0 5L10 10', fill:'#666' }));
+    defs.appendChild(m);
+  });
+  // Grid pattern
+  const pat = svgNS('pattern', { id:'grid', width:'20', height:'20', patternUnits:'userSpaceOnUse' });
+  pat.appendChild(svgNS('path', { d:'M 20 0 L 0 0 0 20', fill:'none', stroke:'#eee', 'stroke-width':'0.5' }));
+  defs.appendChild(pat);
+  svg.appendChild(defs);
+
+  // Grid background
+  svg.appendChild(svgNS('rect', { x:0, y:0, width:1400, height:1000, fill:'url(#grid)' }));
+
+  // ---- PLAN VIEW (top) ----
+  const PO = { x: 700, y: 200 }; // Plan origin
+
+  // Section label
+  const lbl1 = svgNS('text', { x:PO.x, y:30, 'text-anchor':'middle', 'font-family':'"Courier New",monospace', 'font-size':'11', 'letter-spacing':'2', fill:'#888' });
+  lbl1.textContent = 'PLAN VIEW (TOP-DOWN)';
+  svg.appendChild(lbl1);
+
+  // Project: x_body => -x on screen (nose left), y_body => +y on screen
+  const planPts = outline.map(p => [PO.x + (-p[0]+50)*S, PO.y + p[1]*S]);
+  const planPath = planPts.map((p,i) => (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'Z';
+  svg.appendChild(svgNS('path', { d:planPath, fill:'none', stroke:'#222', 'stroke-width':'1.5', 'stroke-linejoin':'round' }));
+
+  // Center line
+  svg.appendChild(svgNS('line', {
+    x1:PO.x+(-102+50)*S, y1:PO.y, x2:PO.x+(2+50)*S, y2:PO.y,
+    stroke:'#aaa', 'stroke-width':'0.4', 'stroke-dasharray':'10,5',
+  }));
+
+  // V-tails (dashed — projected/hidden detail)
+  [vtL, vtR].forEach(vt => {
+    const vp = vt.map(p => [PO.x+(-p[0]+50)*S, PO.y+p[1]*S]);
+    const d = vp.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'Z';
+    svg.appendChild(svgNS('path', { d, fill:'none', stroke:'#555', 'stroke-width':'0.8', 'stroke-dasharray':'4,3' }));
+  });
+
+  // Spine line (dash-dot)
+  const spPlan = spine.map(p => [PO.x+(-p[0]+50)*S, PO.y]);
+  // Just the center line already covers this
+
+  // Sweep angle annotation
+  const sweepArcR = 55;
+  const sweepDeg = 75;
+  const sweepRad = (90 - sweepDeg) * Math.PI / 180;
+  const noseX = PO.x + (-100+50)*S;
+  const arcEndX = noseX + sweepArcR * Math.cos(-sweepRad);
+  const arcEndY = PO.y + sweepArcR * Math.sin(-sweepRad);
+  svg.appendChild(svgNS('path', {
+    d: `M ${noseX+sweepArcR} ${PO.y} A ${sweepArcR} ${sweepArcR} 0 0 0 ${arcEndX.toFixed(1)} ${arcEndY.toFixed(1)}`,
+    fill:'none', stroke:'#c44', 'stroke-width':'0.8',
+  }));
+  const angLbl = svgNS('text', { x:noseX+sweepArcR+6, y:PO.y-6, 'font-family':'"Courier New",monospace', 'font-size':'9', fill:'#c44' });
+  angLbl.textContent = '\u039B = 75\u00B0';
+  svg.appendChild(angLbl);
+
+  // Dim: length
+  addDim(svg, PO.x+(-100+50)*S, PO.y+25*S, PO.x+(0+50)*S, PO.y+25*S, '100.0', 14);
+  // Dim: span
+  addDim(svg, PO.x+(-32+50)*S, PO.y-22.5*S, PO.x+(-32+50)*S, PO.y+22.5*S, '45.0', -16, true);
+  // Dim: nose width
+  addDim(svg, PO.x+(-100+50)*S, PO.y-2*S, PO.x+(-100+50)*S, PO.y+2*S, '4.0', -30, true);
+
+  // ---- PROFILE VIEW (side, bottom-left) ----
+  const PRO = { x: 340, y: 710 };
+  const lbl2 = svgNS('text', { x:PRO.x, y:520, 'text-anchor':'middle', 'font-family':'"Courier New",monospace', 'font-size':'11', 'letter-spacing':'2', fill:'#888' });
+  lbl2.textContent = 'PROFILE VIEW (SIDE)';
+  svg.appendChild(lbl2);
+
+  // Upper profile (spine)
+  const profUp = spine.map(p => [PRO.x+(-p[0]+50)*S, PRO.y-p[2]*S]);
+  // Lower profile (flat bottom)
+  const profLow = [[PRO.x+(-100+50)*S, PRO.y], [PRO.x+(0+50)*S, PRO.y]];
+
+  let profD = 'M ' + profUp.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L ');
+  profD += ` L ${(PRO.x+(0+50)*S).toFixed(1)},${PRO.y}`;
+  profD += ` L ${(PRO.x+(-100+50)*S).toFixed(1)},${PRO.y} Z`;
+  svg.appendChild(svgNS('path', { d:profD, fill:'none', stroke:'#222', 'stroke-width':'1.5' }));
+
+  // V-tail (port, side view)
+  const vtProf = vtL.map(p => [PRO.x+(-p[0]+50)*S, PRO.y-p[2]*S]);
+  const vtProfD = vtProf.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'Z';
+  svg.appendChild(svgNS('path', { d:vtProfD, fill:'none', stroke:'#222', 'stroke-width':'1' }));
+
+  // Waterline
+  svg.appendChild(svgNS('line', {
+    x1:PRO.x+(-105+50)*S, y1:PRO.y, x2:PRO.x+(5+50)*S, y2:PRO.y,
+    stroke:'#aaa', 'stroke-width':'0.4', 'stroke-dasharray':'10,5',
+  }));
+
+  // Cross-section reference lines
+  [35, 56, 80].forEach(xb => {
+    const sx = PRO.x + (-xb+50)*S;
+    svg.appendChild(svgNS('line', {
+      x1:sx, y1:PRO.y+5, x2:sx, y2:PRO.y - 7*S,
+      stroke:'#c44', 'stroke-width':'0.4', 'stroke-dasharray':'3,3',
+    }));
+    const cl = svgNS('text', { x:sx, y:PRO.y+14, 'text-anchor':'middle', 'font-family':'"Courier New",monospace', 'font-size':'8', fill:'#c44' });
+    cl.textContent = 'x='+xb;
+    svg.appendChild(cl);
+  });
+
+  // Dim: max height
+  const peakX = PRO.x + (-56+50)*S;
+  addDim(svg, peakX-30, PRO.y, peakX-30, PRO.y-6*S, '6.0', -14, true);
+  // Dim: length
+  addDim(svg, PRO.x+(-100+50)*S, PRO.y+20, PRO.x+(0+50)*S, PRO.y+20, '100.0', 10);
+
+  // ---- FRONT VIEW (head-on, bottom-right) ----
+  const FO = { x: 1050, y: 710 };
+  const lbl3 = svgNS('text', { x:FO.x, y:520, 'text-anchor':'middle', 'font-family':'"Courier New",monospace', 'font-size':'11', 'letter-spacing':'2', fill:'#888' });
+  lbl3.textContent = 'FRONT VIEW (HEAD-ON)';
+  svg.appendChild(lbl3);
+
+  // Cross-section at x=35 (near max span)
+  const fPts = [];
+  for (let yb = -22.5; yb <= 22.5; yb += 0.5) {
+    const ay = Math.abs(yb);
+    let zb;
+    if (ay < 4) {
+      zb = 5.5 + 0.5 * Math.cos(ay / 4 * Math.PI / 2); // Spine peak
+    } else if (ay < 10) {
+      const t = (ay - 4) / 6;
+      zb = 5.5 * (1 - t * 0.65); // Fuselage-to-wing blend
+    } else {
+      const t = (ay - 10) / 12.5;
+      zb = 5.5 * 0.35 * Math.max(0, 1 - t * t); // Thin wing
+    }
+    fPts.push([FO.x + yb * S, FO.y - zb * S]);
+  }
+  // Close with bottom line
+  let fD = 'M ' + fPts.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L ');
+  fD += ` L ${(FO.x+22.5*S).toFixed(1)},${FO.y} L ${(FO.x-22.5*S).toFixed(1)},${FO.y} Z`;
+  svg.appendChild(svgNS('path', { d:fD, fill:'none', stroke:'#222', 'stroke-width':'1.5' }));
+
+  // V-tails (front projection)
+  const vtFW = 0.5; // Fin thickness visual
+  [[-6, -11, -10.5, -6], [6, 11, 10.5, 6]].forEach(([yb1, yt1, yt2, yb2]) => {
+    const fp = [
+      [FO.x+yb1*S, FO.y-3.5*S], [FO.x+yt1*S, FO.y-8.5*S],
+      [FO.x+yt2*S, FO.y-9*S],   [FO.x+yb2*S, FO.y-4*S],
+    ];
+    const d = fp.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'Z';
+    svg.appendChild(svgNS('path', { d, fill:'none', stroke:'#222', 'stroke-width':'1' }));
+  });
+
+  // Cant angle annotation (port)
+  const cantLbl = svgNS('text', { x:FO.x-13.5*S, y:FO.y-7*S, 'font-family':'"Courier New",monospace', 'font-size':'9', fill:'#c44' });
+  cantLbl.textContent = '35\u00B0';
+  svg.appendChild(cantLbl);
+  // Angle reference line (vertical)
+  svg.appendChild(svgNS('line', {
+    x1:FO.x-6*S, y1:FO.y-3.5*S, x2:FO.x-6*S, y2:FO.y-10*S,
+    stroke:'#c44', 'stroke-width':'0.4', 'stroke-dasharray':'3,3',
+  }));
+
+  // Center line
+  svg.appendChild(svgNS('line', {
+    x1:FO.x, y1:FO.y+5, x2:FO.x, y2:FO.y-11*S,
+    stroke:'#aaa', 'stroke-width':'0.4', 'stroke-dasharray':'10,5',
+  }));
+
+  // Dim: span
+  addDim(svg, FO.x-22.5*S, FO.y+16, FO.x+22.5*S, FO.y+16, '45.0', 12);
+  // Dim: height
+  addDim(svg, FO.x+24*S, FO.y, FO.x+24*S, FO.y-6*S, '6.0', 14, true);
+
+  // ---- Scale bar ----
+  const sbY = 970, sbX = 50, sbLen = 10*S;
+  svg.appendChild(svgNS('line', { x1:sbX, y1:sbY, x2:sbX+sbLen, y2:sbY, stroke:'#555', 'stroke-width':'1.5' }));
+  [sbX, sbX+sbLen].forEach(x => {
+    svg.appendChild(svgNS('line', { x1:x, y1:sbY-5, x2:x, y2:sbY+5, stroke:'#555', 'stroke-width':'1.5' }));
+  });
+  const sbLbl = svgNS('text', { x:sbX+sbLen/2, y:sbY-10, 'text-anchor':'middle', 'font-family':'"Courier New",monospace', 'font-size':'10', fill:'#666' });
+  sbLbl.textContent = '10 units';
+  svg.appendChild(sbLbl);
+
+  // Drawing border
+  svg.appendChild(svgNS('rect', { x:1, y:1, width:1398, height:998, fill:'none', stroke:'#ccc', 'stroke-width':'1' }));
+
+  // Title block (bottom-right)
+  svg.appendChild(svgNS('rect', { x:1100, y:940, width:298, height:58, fill:'#f0f0ec', stroke:'#ccc', 'stroke-width':'0.8' }));
+  const tb1 = svgNS('text', { x:1110, y:958, 'font-family':'"Courier New",monospace', 'font-size':'10', fill:'#444' });
+  tb1.textContent = 'HTV-3X BLACKSWIFT';
+  svg.appendChild(tb1);
+  const tb2 = svgNS('text', { x:1110, y:972, 'font-family':'"Courier New",monospace', 'font-size':'8', fill:'#888' });
+  tb2.textContent = 'THREE-VIEW ORTHOGRAPHIC \u2014 NORMALIZED 100-UNIT REF';
+  svg.appendChild(tb2);
+  const tb3 = svgNS('text', { x:1110, y:986, 'font-family':'"Courier New",monospace', 'font-size':'8', fill:'#888' });
+  tb3.textContent = 'BOEING PHANTOM WORKS \u2014 CONCEPTUAL STUDY';
+  svg.appendChild(tb3);
+}
+
+function addDim(svg, x1, y1, x2, y2, label, offset, vert) {
+  const ox = vert ? offset : 0;
+  const oy = vert ? 0 : offset;
+  // Extension lines
+  svg.appendChild(svgNS('line', { x1,y1, x2:x1+ox,y2:y1+oy, stroke:'#aaa','stroke-width':'0.4' }));
+  svg.appendChild(svgNS('line', { x1:x2,y1:y2, x2:x2+ox,y2:y2+oy, stroke:'#aaa','stroke-width':'0.4' }));
+  // Dimension line
+  svg.appendChild(svgNS('line', {
+    x1:x1+ox, y1:y1+oy, x2:x2+ox, y2:y2+oy,
+    stroke:'#666', 'stroke-width':'0.7',
+    'marker-start':'url(#aStart)', 'marker-end':'url(#aEnd)',
+  }));
+  // Label
+  const mx = (x1+x2)/2+ox + (vert?-12:0);
+  const my = (y1+y2)/2+oy + (vert?0:-5);
+  const t = svgNS('text', {
+    x:mx, y:my, 'text-anchor':'middle',
+    'font-family':'"Courier New",monospace', 'font-size':'9', fill:'#555',
+  });
+  t.textContent = label;
+  svg.appendChild(t);
+}
+
+// ================================================================
+// ZOOM / PAN (Orthographic)
+// ================================================================
+
+(function() {
+  const ctr = document.getElementById('orthoContainer');
+  const svg = document.getElementById('orthoSvg');
+  let scale = 1, px = 0, py = 0, drag = false, sx, sy;
+
+  function upd() {
+    svg.style.transform = `translate(${px}px,${py}px) scale(${scale})`;
+    document.getElementById('zoomLevel').textContent = Math.round(scale*100)+'%';
+  }
+
+  ctr.addEventListener('wheel', e => {
+    e.preventDefault();
+    const d = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.max(0.3, Math.min(5, scale * d));
+    upd();
+  }, { passive: false });
+
+  ctr.addEventListener('mousedown', e => { drag=true; sx=e.clientX-px; sy=e.clientY-py; });
+  window.addEventListener('mousemove', e => { if(!drag) return; px=e.clientX-sx; py=e.clientY-sy; upd(); });
+  window.addEventListener('mouseup', () => drag=false);
+
+  document.getElementById('zoomIn').onclick = () => { scale=Math.min(5,scale*1.2); upd(); };
+  document.getElementById('zoomOut').onclick = () => { scale=Math.max(0.3,scale/1.2); upd(); };
+  document.getElementById('zoomReset').onclick = () => { scale=1; px=0; py=0; upd(); };
+})();
+
+// ================================================================
+// INIT
+// ================================================================
+render();
+buildOrtho();
+</script>
+</body>
+</html>

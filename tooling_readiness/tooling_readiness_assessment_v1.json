@@ -1,0 +1,49 @@
+{
+  "tool_summary": {
+    "status": "[BLOCKED: Manufacturing Target CAD Missing]",
+    "tool_type": "Inspection holding fixture plus trim/drill prototype fixture",
+    "production_context": "Prototype tooling readiness for selected subassembly target",
+    "volume_target_class": "PROTOTYPE",
+    "selected_target": "Avionics Bay Hatch"
+  },
+  "datum_strategy": {
+    "status": "DEFINED",
+    "blocking_reason": ""
+  },
+  "available_verified_inputs": {
+    "datum_structure_definition": [
+      "tooling_readiness/selected_target_avionics_bay_hatch/datum_structure_definition_v1.json"
+    ],
+    "quality_inspection_plan": [
+      "tooling_readiness/selected_target_avionics_bay_hatch/quality_inspection_plan_v1.json"
+    ],
+    "manufacturing_process_definition": [
+      "tooling_readiness/selected_target_avionics_bay_hatch/manufacturing_process_definition_v1.json"
+    ],
+    "production_process_plan": [
+      "tooling_readiness/selected_target_avionics_bay_hatch/production_process_plan_v1.md"
+    ],
+    "production_volume_target": [
+      "tooling_readiness/selected_target_avionics_bay_hatch/production_volume_target_v1.json"
+    ]
+  },
+  "available_upstream_artifacts": [
+    "program_artifacts/architecture_spec_v1.json",
+    "program_artifacts/power_budget_v1.json",
+    "workspace/architect/outbox/architecture_spec_v1.json",
+    "workspace/assurance/outbox/test_validation_report_v1.md"
+  ],
+  "missing_release_inputs": [
+    {
+      "name": "manufacturing_target_cad",
+      "description": "authoritative released CAD for the part or assembly"
+    }
+  ],
+  "primary_risks": [
+    "No released manufacturing target CAD is available for fixture, mold, or EOAT geometry."
+  ],
+  "next_release_gates": [
+    "Release authoritative CAD for the selected avionics bay hatch target."
+  ],
+  "recommendation": "Advance the selected target package to released CAD, then start prototype fixture architecture."
+}

@@ -1,0 +1,35 @@
+{
+  "artifact": "architecture_spec_v1",
+  "designation": "PROTCTR / E1",
+  "mission_class": "Conceptual hypersonic surveillance and systems-pathfinder demonstrator",
+  "airframe": {
+    "planform": "Blended wing body with waverider wedge integration",
+    "length_m": 21.0,
+    "span_m": 8.6,
+    "reference_area_m2": 34.0,
+    "fineness_ratio": 5.312,
+    "sweep_deg": 73.0,
+    "nose_radius_m": 0.028
+  },
+  "subsystems": {
+    "flight_sciences": "2D point-mass dynamics with hypersonic aero/heating model",
+    "propulsion": "Booster to scramjet envelope approximation",
+    "thermal_protection": "Carbon-carbon / TPS concept with 2.5 MW/m^2 conceptual limit",
+    "stability": "Twin-tail wake-avoidance stability proxy",
+    "mission_software": "FastAPI webapp plus CLI simulation and plotting"
+  },
+  "mosa_interfaces": [
+    "SimulationConfig input contract",
+    "SimPoint timeline schema",
+    "CSV profile export format",
+    "Web API /api/simulate and /api/program"
+  ],
+  "constraints": {
+    "status": "conceptual",
+    "notes": [
+      "No 6-DOF flight control law implemented",
+      "No CFD or structural FEM in repository",
+      "Claims must be labeled model-predicted unless validated by test evidence"
+    ]
+  }
+}

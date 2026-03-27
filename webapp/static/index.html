@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PROTCTR Aerodynamic Digital Twin</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap");
+
+    :root {
+      --bg-a: #070b13;
+      --bg-b: #101b2f;
+      --panel: rgba(8, 16, 30, 0.78);
+      --panel-border: rgba(168, 196, 236, 0.24);
+      --ink: #eaf3ff;
+      --muted: #8ea4c4;
+      --accent: #70e0ff;
+      --warning: #ff8a5b;
+      --good: #8cf7c2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Space Grotesk", "Avenir Next", sans-serif;
+      background:
+        radial-gradient(circle at 80% 0%, rgba(80, 186, 255, 0.15), transparent 34%),
+        radial-gradient(circle at 20% 100%, rgba(255, 131, 86, 0.12), transparent 38%),
+        linear-gradient(150deg, var(--bg-a), var(--bg-b));
+      min-height: 100vh;
+    }
+
+    .app {
+      width: min(1260px, 95vw);
+      margin: 20px auto 30px;
+      display: grid;
+      grid-template-columns: minmax(320px, 360px) 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+    }
+
+    .left {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .right {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.45rem;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .control-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 2px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(140, 189, 252, 0.14);
+    }
+
+    .control-title {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--ink);
+    }
+
+    label {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      align-items: center;
+    }
+
+    input[type="range"] {
+      grid-column: 1 / -1;
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .value {
+      color: var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.86rem;
+    }
+
+    .run-btn {
+      margin-top: 4px;
+      border: none;
+      background: linear-gradient(90deg, #62b8ff, #73f4c3);
+      color: #021227;
+      border-radius: 12px;
+      font-weight: 700;
+      padding: 11px 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.18s ease, filter 0.18s ease;
+    }
+
+    .run-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.07);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .ghost-btn {
+      border: 1px solid rgba(140, 189, 252, 0.24);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ink);
+      border-radius: 12px;
+      font-weight: 600;
+      padding: 11px 14px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .ghost-btn:hover {
+      border-color: rgba(112, 224, 255, 0.5);
+      color: var(--accent);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      border: 1px solid rgba(140, 189, 252, 0.18);
+      border-radius: 10px;
+      background: rgba(12, 27, 50, 0.45);
+    }
+
+    .metric .k {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .metric .v {
+      margin-top: 4px;
+      font-size: 1.02rem;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .blueprint-wrap {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 12px;
+    }
+
+    .blueprint {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(166, 199, 237, 0.18);
+      background: linear-gradient(180deg, rgba(16, 32, 55, 0.5), rgba(8, 14, 26, 0.7));
+      padding: 8px;
+    }
+
+    .part {
+      transition: filter 0.2s ease, fill 0.2s ease;
+      cursor: pointer;
+    }
+
+    .part:hover {
+      filter: brightness(1.22);
+    }
+
+    .part.active {
+      filter: drop-shadow(0 0 8px rgba(112, 224, 255, 0.7));
+    }
+
+    .part-info {
+      border: 1px solid rgba(128, 182, 238, 0.2);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(12, 24, 44, 0.62);
+      min-height: 110px;
+    }
+
+    .part-info h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+    }
+
+    .part-info p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.88rem;
+    }
+
+    .slider-wrap {
+      display: grid;
+      gap: 6px;
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-wrap label {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .mini-btn {
+      border: 1px solid rgba(140, 189, 252, 0.24);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 0.75rem;
+      font-family: "IBM Plex Mono", monospace;
+      cursor: pointer;
+    }
+
+    .mini-btn:hover {
+      border-color: rgba(112, 224, 255, 0.5);
+      color: var(--accent);
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .chart-card {
+      border: 1px solid rgba(136, 182, 232, 0.18);
+      border-radius: 10px;
+      background: rgba(11, 23, 43, 0.58);
+      padding: 8px 8px 4px;
+    }
+
+    .chart-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 0 0 6px 2px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 125px;
+      display: block;
+    }
+
+    .fine {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .program-panel {
+      margin-top: 4px;
+      padding: 12px;
+      border: 1px solid rgba(136, 182, 232, 0.18);
+      border-radius: 12px;
+      background: rgba(10, 24, 43, 0.55);
+      display: grid;
+      gap: 10px;
+    }
+
+    .program-title {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--ink);
+    }
+
+    .program-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .claims-list {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .artifact-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .artifact-link {
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid rgba(140, 189, 252, 0.22);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.76rem;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .artifact-link:hover {
+      border-color: rgba(112, 224, 255, 0.5);
+      color: var(--accent);
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+      .blueprint-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel left">
+      <div>
+        <h1>PROTCTR Aerodynamic Digital Twin</h1>
+        <p class="subtitle">Interactive hypersonic slipstream and thermal envelope simulator</p>
+      </div>
+
+      <div class="form-grid">
+        <label>Duration (s) <span class="value" id="durationVal">260</span>
+          <input id="duration" type="range" min="20" max="600" step="10" value="260">
+        </label>
+        <label>Time Step (s) <span class="value" id="dtVal">0.5</span>
+          <input id="dt" type="range" min="0.1" max="2.0" step="0.1" value="0.5">
+        </label>
+        <label>Initial Altitude (m) <span class="value" id="altitudeVal">19000</span>
+          <input id="altitude" type="range" min="2000" max="42000" step="500" value="19000">
+        </label>
+        <label>Initial Mach <span class="value" id="machVal">3.4</span>
+          <input id="mach" type="range" min="0.8" max="8.5" step="0.1" value="3.4">
+        </label>
+        <label>Flight Path Angle (deg) <span class="value" id="gammaVal">9</span>
+          <input id="gamma" type="range" min="-10" max="25" step="1" value="9">
+        </label>
+      </div>
+
+      <div class="control-grid">
+        <p class="control-title">Morphing Flight Controls</p>
+        <label>Wing Morph (%) <span class="value" id="wingMorphVal">0</span>
+          <input id="wingMorph" type="range" min="-25" max="25" step="1" value="0">
+        </label>
+        <label>Flap Deflection (deg) <span class="value" id="flapVal">0</span>
+          <input id="flapDeflection" type="range" min="-5" max="20" step="1" value="0">
+        </label>
+        <label>Body Morph (%) <span class="value" id="bodyMorphVal">0</span>
+          <input id="bodyMorph" type="range" min="-20" max="20" step="1" value="0">
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button class="run-btn" id="runBtn">Run From Launch</button>
+        <button class="ghost-btn" id="applyMidflightBtn" type="button">Apply Mid-Flight</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="metric"><div class="k">Peak Mach</div><div class="v" id="mPeak">-</div></div>
+        <div class="metric"><div class="k">Range (km)</div><div class="v" id="mRange">-</div></div>
+        <div class="metric"><div class="k">Peak Heat (MW/m²)</div><div class="v" id="mHeat">-</div></div>
+        <div class="metric"><div class="k">Max Altitude (km)</div><div class="v" id="mAlt">-</div></div>
+        <div class="metric"><div class="k">Min TPS Margin</div><div class="v" id="mTps">-</div></div>
+        <div class="metric"><div class="k">Max L/D</div><div class="v" id="mLd">-</div></div>
+      </div>
+
+      <div class="program-panel">
+        <p class="program-title">Autonomous Aerospace Collective Revision</p>
+        <p class="program-copy" id="programMission">Loading mission and architecture artifacts...</p>
+        <ul class="claims-list" id="claimsList"></ul>
+        <div class="artifact-links" id="artifactLinks"></div>
+      </div>
+
+      <div class="fine" id="status">Status: idle</div>
+    </section>
+
+    <section class="panel right">
+      <div class="blueprint-wrap">
+        <div class="blueprint">
+          <svg id="blueprintSvg" viewBox="0 0 560 280" width="100%" height="250" aria-label="PROTCTR Blueprint">
+            <defs>
+              <linearGradient id="bodyGrad" x1="0" x2="1" y1="0.5" y2="0.5">
+                <stop offset="0%" stop-color="#27384e"/>
+                <stop offset="50%" stop-color="#384f6c"/>
+                <stop offset="100%" stop-color="#27384e"/>
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="560" height="280" fill="transparent"/>
+            <polygon id="leftWing" class="part" data-part="leftWing" points="275,134 100,55 42,82 225,145" fill="#28384d" stroke="#8db7db" stroke-width="1.2"/>
+            <polygon id="rightWing" class="part" data-part="rightWing" points="275,146 225,135 42,198 100,225" fill="#28384d" stroke="#8db7db" stroke-width="1.2"/>
+            <polygon id="leftFlap" class="part" data-part="leftFlap" points="226,136 178,118 164,122 212,141" fill="#35506f" stroke="#b7d7f7" stroke-width="0.9"/>
+            <polygon id="rightFlap" class="part" data-part="rightFlap" points="226,144 212,139 164,158 178,162" fill="#35506f" stroke="#b7d7f7" stroke-width="0.9"/>
+            <polygon id="body" class="part" data-part="body" points="70,140 240,90 492,130 545,140 492,150 240,190" fill="url(#bodyGrad)" stroke="#cce1f7" stroke-width="1.4"/>
+            <polygon id="spine" class="part" data-part="spine" points="236,121 396,132 478,139 396,147 236,158 274,140" fill="#425d81" stroke="#b7d7f7" stroke-width="1"/>
+            <polygon id="nose" class="part" data-part="nose" points="50,131 78,137 78,143 50,149 18,140" fill="#495f7a" stroke="#dceeff" stroke-width="1.2"/>
+            <polygon id="tailL" class="part" data-part="tailL" points="492,129 538,90 552,94 510,136" fill="#314763" stroke="#a5c8ec" stroke-width="1"/>
+            <polygon id="tailR" class="part" data-part="tailR" points="492,151 510,144 552,186 538,190" fill="#314763" stroke="#a5c8ec" stroke-width="1"/>
+            <text x="88" y="129" fill="#dbe8f6" font-size="15" font-family="'IBM Plex Mono', monospace">E1</text>
+            <text x="360" y="165" fill="#9cb5d0" font-size="11" font-family="'IBM Plex Mono', monospace">PROTCTR</text>
+          </svg>
+        </div>
+        <div class="part-info">
+          <h3 id="partTitle">Blueprint Focus</h3>
+          <p id="partDesc">Select a region to inspect how geometry influences compression, lift generation, and heating.</p>
+        </div>
+      </div>
+
+      <div class="slider-wrap">
+        <div class="slider-head">
+          <label>Timeline Scrubber <span id="timelineLabel">t=0s</span></label>
+          <button class="mini-btn" id="playPauseBtn" type="button">Pause Loop</button>
+        </div>
+        <input id="timeline" type="range" min="0" max="0" step="1" value="0">
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <p class="chart-label">Altitude Profile (km)</p>
+          <canvas id="altChart" width="940" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <p class="chart-label">Mach Profile</p>
+          <canvas id="machChart" width="940" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <p class="chart-label">Thermal Envelope (MW/m²)</p>
+          <canvas id="heatChart" width="940" height="220"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function setStatusText(text) {
+      const statusEl = document.getElementById("status");
+      if (statusEl) {
+        statusEl.textContent = `Status: ${text}`;
+      }
+    }
+
+    window.addEventListener("error", (event) => {
+      setStatusText(`ui error: ${event.message}`);
+    });
+
+    window.addEventListener("unhandledrejection", (event) => {
+      const reason = event.reason && event.reason.message ? event.reason.message : String(event.reason);
+      setStatusText(`ui promise error: ${reason}`);
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+    const partMetadata = {
+      nose: {
+        title: "Spatulate Nose Cone",
+        desc: "Razor-flat forebody that initiates controlled shock formation and minimizes stochastic local heating spikes."
+      },
+      leftWing: {
+        title: "Port Waverider Chine",
+        desc: "Highly swept compression surface tuned to trap and ride oblique shock energy for usable lift."
+      },
+      rightWing: {
+        title: "Starboard Waverider Chine",
+        desc: "Mirrored compression geometry sustaining shock-attached lift at high Mach while managing drag growth."
+      },
+      leftFlap: {
+        title: "Port Flap Surface",
+        desc: "Trailing-edge control surface used to bias lift, trim, and transient path shaping during morph transitions."
+      },
+      rightFlap: {
+        title: "Starboard Flap Surface",
+        desc: "Mirrored trailing-edge surface contributing incremental lift and control authority at the cost of added drag."
+      },
+      body: {
+        title: "Blended Main Body",
+        desc: "Elongated fineness-ratio core that couples waverider loading with low-separation fore-to-aft flow."
+      },
+      spine: {
+        title: "Dorsal Aerodynamic Spine",
+        desc: "Central ridge associated with compression management and likely propulsion duct integration."
+      },
+      tailL: {
+        title: "Twin Stabilizer (Port)",
+        desc: "Outboard/canted tail surface positioned to preserve directional stability outside the dominant wake."
+      },
+      tailR: {
+        title: "Twin Stabilizer (Starboard)",
+        desc: "Paired vertical control surface contributing yaw damping and high-speed directional authority."
+      }
+    };
+
+    const state = {
+      timeline: [],
+      summary: null,
+      vehicle: null,
+      peakHeat: 1,
+      peakQ: 1,
+      currentIndex: 0,
+      playbackHandle: null,
+      isPlaying: false,
+      playbackToken: 0
+    };
+    const PLAYBACK_INTERVAL_MS = 85;
+
+    const ids = ["duration", "dt", "altitude", "mach", "gamma", "wingMorph", "flapDeflection", "bodyMorph"];
+    for (const id of ids) {
+      const input = document.getElementById(id);
+      const valueIdMap = {
+        wingMorph: "wingMorphVal",
+        flapDeflection: "flapVal",
+        bodyMorph: "bodyMorphVal"
+      };
+      const val = document.getElementById(valueIdMap[id] || (id + "Val"));
+      input.addEventListener("input", () => {
+        val.textContent = input.value;
+        if (id === "wingMorph" || id === "flapDeflection" || id === "bodyMorph") {
+          stopPlayback();
+          applyGeometryTransforms(getControlPayload());
+          setStatus("controls staged | press Apply Mid-Flight to continue");
+        }
+      });
+    }
+
+    function fmt(n, digits = 2) {
+      return Number(n).toFixed(digits);
+    }
+
+    function setStatus(text) {
+      setStatusText(text);
+    }
+
+    function updatePlaybackButton() {
+      document.getElementById("playPauseBtn").textContent = state.isPlaying ? "Pause Loop" : "Resume Loop";
+    }
+
+    function stopPlayback() {
+      state.playbackToken += 1;
+      if (state.playbackHandle !== null) {
+        window.clearInterval(state.playbackHandle);
+        state.playbackHandle = null;
+      }
+      state.isPlaying = false;
+      updatePlaybackButton();
+    }
+
+    function startPlayback() {
+      if (!state.timeline.length) return;
+      state.playbackToken += 1;
+      const token = state.playbackToken;
+      if (state.playbackHandle !== null) {
+        window.clearInterval(state.playbackHandle);
+      }
+      state.isPlaying = true;
+      updatePlaybackButton();
+      state.playbackHandle = window.setInterval(() => {
+        if (!state.isPlaying || token !== state.playbackToken) {
+          return;
+        }
+        const nextIndex =
+          state.currentIndex >= state.timeline.length - 1
+            ? 0
+            : state.currentIndex + 1;
+        updateAtIndex(nextIndex);
+      }, PLAYBACK_INTERVAL_MS);
+    }
+
+    function togglePlayback() {
+      if (state.isPlaying) {
+        stopPlayback();
+      } else {
+        startPlayback();
+      }
+    }
+
+    function getControlPayload() {
+      return {
+        wing_morph_pct: Number(document.getElementById("wingMorph").value) / 100,
+        flap_deflection_deg: Number(document.getElementById("flapDeflection").value),
+        body_morph_pct: Number(document.getElementById("bodyMorph").value) / 100
+      };
+    }
+
+    function applyGeometryTransforms(controls) {
+      const wingShift = 18 * controls.wing_morph_pct;
+      const wingRotate = -10 * controls.wing_morph_pct;
+      const bodyScaleY = 1 + 0.32 * controls.body_morph_pct;
+      const flapRotate = controls.flap_deflection_deg * 0.75;
+
+      document.getElementById("leftWing").setAttribute("transform", `translate(${-wingShift}, ${wingShift * 0.4}) rotate(${wingRotate} 225 145)`);
+      document.getElementById("rightWing").setAttribute("transform", `translate(${-wingShift}, ${-wingShift * 0.4}) rotate(${-wingRotate} 225 135)`);
+      document.getElementById("body").setAttribute("transform", `scale(1 ${bodyScaleY}) translate(0 ${(1 - bodyScaleY) * 140})`);
+      document.getElementById("spine").setAttribute("transform", `scale(1 ${1 + 0.45 * controls.body_morph_pct}) translate(0 ${(-0.45 * controls.body_morph_pct) * 140})`);
+      document.getElementById("leftFlap").setAttribute("transform", `rotate(${flapRotate} 210 140)`);
+      document.getElementById("rightFlap").setAttribute("transform", `rotate(${-flapRotate} 210 140)`);
+    }
+
+    function syncControlInputs(controls) {
+      document.getElementById("wingMorph").value = String(Math.round(controls.wing_morph_pct * 100));
+      document.getElementById("flapDeflection").value = String(Math.round(controls.flap_deflection_deg));
+      document.getElementById("bodyMorph").value = String(Math.round(controls.body_morph_pct * 100));
+      document.getElementById("wingMorphVal").textContent = document.getElementById("wingMorph").value;
+      document.getElementById("flapVal").textContent = document.getElementById("flapDeflection").value;
+      document.getElementById("bodyMorphVal").textContent = document.getElementById("bodyMorph").value;
+    }
+
+    function summarizeTimeline(timeline, heatLimit) {
+      return {
+        max_mach: Math.max(...timeline.map(p => p.mach)),
+        max_altitude_km: Math.max(...timeline.map(p => p.altitude_m)) / 1000,
+        range_km: timeline[timeline.length - 1].downrange_m / 1000,
+        peak_heat_flux_mw_m2: Math.max(...timeline.map(p => p.heat_flux_mw_m2)),
+        min_tps_margin_mw_m2: Math.min(...timeline.map(p => p.tps_margin_mw_m2)),
+        max_ld_ratio: Math.max(...timeline.map(p => p.ld_ratio)),
+        samples: timeline.length,
+        time_over_tps_limit_pct:
+          100 * timeline.filter(p => p.heat_flux_mw_m2 > heatLimit).length / Math.max(timeline.length, 1)
+      };
+    }
+
+    function drawLineChart(canvas, values, color, markerIndex) {
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      const pad = { left: 42, right: 18, top: 14, bottom: 24 };
+      const x0 = pad.left;
+      const y0 = h - pad.bottom;
+      const chartW = w - pad.left - pad.right;
+      const chartH = h - pad.top - pad.bottom;
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const span = (max - min) || 1;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(8,15,28,0.35)";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "rgba(140,180,220,0.24)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.top + (chartH / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        ctx.lineTo(x0 + chartW, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      values.forEach((v, i) => {
+        const x = x0 + (i / Math.max(values.length - 1, 1)) * chartW;
+        const y = pad.top + ((max - v) / span) * chartH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      const markerX = x0 + (markerIndex / Math.max(values.length - 1, 1)) * chartW;
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(markerX, pad.top);
+      ctx.lineTo(markerX, y0);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(222,238,255,0.9)";
+      ctx.font = "12px 'IBM Plex Mono'";
+      ctx.fillText(min.toFixed(2), 6, y0);
+      ctx.fillText(max.toFixed(2), 6, pad.top + 10);
+    }
+
+    function updateBlueprint(point) {
+      const heatNorm = Math.min(1, point.heat_flux_mw_m2 / Math.max(state.peakHeat, 0.0001));
+      const qNorm = Math.min(1, point.q_dyn_kpa / Math.max(state.peakQ, 0.0001));
+      const nose = document.getElementById("nose");
+      const body = document.getElementById("body");
+      const spine = document.getElementById("spine");
+      const leftWing = document.getElementById("leftWing");
+      const rightWing = document.getElementById("rightWing");
+      const leftFlap = document.getElementById("leftFlap");
+      const rightFlap = document.getElementById("rightFlap");
+      const tailL = document.getElementById("tailL");
+      const tailR = document.getElementById("tailR");
+
+      nose.style.fill = `hsl(${12 - 8 * heatNorm} 88% ${62 - 18 * heatNorm}%)`;
+      spine.style.fill = `hsl(${210 - 40 * qNorm} 42% ${44 + 10 * qNorm}%)`;
+      body.style.fill = `hsl(${214 - 28 * qNorm} 30% ${32 + 8 * qNorm}%)`;
+      leftWing.style.fill = `hsl(${213 - 22 * qNorm} 34% ${30 + 5 * qNorm}%)`;
+      rightWing.style.fill = leftWing.style.fill;
+      leftFlap.style.fill = `hsl(${198 - 18 * qNorm} 32% ${38 + 10 * qNorm}%)`;
+      rightFlap.style.fill = leftFlap.style.fill;
+      tailL.style.fill = `hsl(${217 - 6 * qNorm} 30% ${34 + 9 * qNorm}%)`;
+      tailR.style.fill = tailL.style.fill;
+      applyGeometryTransforms({
+        wing_morph_pct: point.wing_morph_pct || 0,
+        flap_deflection_deg: point.flap_deflection_deg || 0,
+        body_morph_pct: point.body_morph_pct || 0
+      });
+    }
+
+    function activatePart(name) {
+      document.querySelectorAll(".part").forEach(el => el.classList.remove("active"));
+      const part = document.querySelector(`[data-part="${name}"]`);
+      if (part) part.classList.add("active");
+      const details = partMetadata[name];
+      if (details) {
+        document.getElementById("partTitle").textContent = details.title;
+        document.getElementById("partDesc").textContent = details.desc;
+      }
+    }
+
+    function render(summary, timeline, options = {}) {
+      const startIndex = options.startIndex || 0;
+      const shouldAutoplay = options.autoplay !== false;
+      document.getElementById("mPeak").textContent = fmt(summary.max_mach, 2);
+      document.getElementById("mRange").textContent = fmt(summary.range_km, 1);
+      document.getElementById("mHeat").textContent = fmt(summary.peak_heat_flux_mw_m2, 3);
+      document.getElementById("mAlt").textContent = fmt(summary.max_altitude_km, 1);
+      document.getElementById("mTps").textContent = fmt(summary.min_tps_margin_mw_m2, 3);
+      document.getElementById("mLd").textContent = fmt(summary.max_ld_ratio, 2);
+
+      state.timeline = timeline;
+      state.summary = summary;
+      state.vehicle = state.vehicle || { tps_heat_limit_mw_m2: 2.5 };
+      state.peakHeat = Math.max(...timeline.map(p => p.heat_flux_mw_m2));
+      state.peakQ = Math.max(...timeline.map(p => p.q_dyn_kpa));
+
+      const slider = document.getElementById("timeline");
+      slider.max = String(Math.max(0, timeline.length - 1));
+      slider.value = String(startIndex);
+      updateAtIndex(startIndex);
+      if (shouldAutoplay) {
+        startPlayback();
+      }
+    }
+
+    function renderProgram(program) {
+      const missionText = [
+        program.market_requirements.mission,
+        `Theater: ${program.market_requirements.theater}`,
+        `Priorities: ${program.market_requirements.operator_priorities.join(", ")}`
+      ].join(" | ");
+      document.getElementById("programMission").textContent = missionText;
+
+      const claimsList = document.getElementById("claimsList");
+      claimsList.innerHTML = "";
+      program.validated_claims.slice(0, 3).forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = `${item.claim} [${item.claim_type}]`;
+        claimsList.appendChild(li);
+      });
+
+      const links = document.getElementById("artifactLinks");
+      links.innerHTML = "";
+      Object.entries(program.artifact_urls).forEach(([name, href]) => {
+        const a = document.createElement("a");
+        a.className = "artifact-link";
+        a.href = href;
+        a.target = "_blank";
+        a.rel = "noreferrer";
+        a.textContent = name.replace("_v1", "").replace(".md", "").replace(".json", "");
+        links.appendChild(a);
+      });
+
+      if (program.workspace_manifest_url) {
+        const a = document.createElement("a");
+        a.className = "artifact-link";
+        a.href = program.workspace_manifest_url;
+        a.target = "_blank";
+        a.rel = "noreferrer";
+        a.textContent = "workspace manifest";
+        links.appendChild(a);
+      }
+    }
+
+    function updateAtIndex(index) {
+      if (!state.timeline.length) return;
+      state.currentIndex = index;
+      document.getElementById("timeline").value = String(index);
+      const point = state.timeline[index];
+      syncControlInputs({
+        wing_morph_pct: point.wing_morph_pct || 0,
+        flap_deflection_deg: point.flap_deflection_deg || 0,
+        body_morph_pct: point.body_morph_pct || 0
+      });
+      document.getElementById("timelineLabel").textContent =
+        `t=${fmt(point.t_s, 1)}s | Mach ${fmt(point.mach, 2)} | Heat ${fmt(point.heat_flux_mw_m2, 3)} MW/m²`;
+
+      drawLineChart(
+        document.getElementById("altChart"),
+        state.timeline.map(p => p.altitude_m / 1000),
+        "#60b8ff",
+        index
+      );
+      drawLineChart(
+        document.getElementById("machChart"),
+        state.timeline.map(p => p.mach),
+        "#73f4c3",
+        index
+      );
+      drawLineChart(
+        document.getElementById("heatChart"),
+        state.timeline.map(p => p.heat_flux_mw_m2),
+        "#ff8f62",
+        index
+      );
+
+      updateBlueprint(point);
+    }
+
+    document.getElementById("timeline").addEventListener("input", (event) => {
+      updateAtIndex(Number(event.target.value));
+    });
+
+    document.getElementById("playPauseBtn").addEventListener("click", togglePlayback);
+    document.getElementById("applyMidflightBtn").addEventListener("click", applyMidflightChanges);
+
+    document.querySelectorAll(".part").forEach(part => {
+      part.addEventListener("mouseenter", () => activatePart(part.dataset.part));
+      part.addEventListener("click", () => activatePart(part.dataset.part));
+    });
+
+    async function runSimulation() {
+      stopPlayback();
+      setStatus("running simulation...");
+      const payload = {
+        duration_s: Number(document.getElementById("duration").value),
+        dt_s: Number(document.getElementById("dt").value),
+        initial_altitude_m: Number(document.getElementById("altitude").value),
+        initial_mach: Number(document.getElementById("mach").value),
+        initial_gamma_deg: Number(document.getElementById("gamma").value),
+        ...getControlPayload()
+      };
+
+      try {
+        const apiBase = window.location.origin && window.location.origin.startsWith("http")
+          ? window.location.origin
+          : "http://127.0.0.1:8000";
+        const response = await fetch(new URL("/api/simulate", apiBase).toString(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          throw new Error(`Simulation API failed (${response.status})`);
+        }
+        const data = await response.json();
+        state.vehicle = data.vehicle;
+        render(data.summary, data.timeline, { startIndex: 0, autoplay: true });
+        setStatus(`ready | ${data.timeline.length} samples | looping`);
+        activatePart("body");
+      } catch (err) {
+        setStatus(`error: ${err.message}`);
+      }
+    }
+
+    async function applyMidflightChanges() {
+      if (!state.timeline.length) {
+        setStatus("error: no flight state to continue from");
+        return;
+      }
+      stopPlayback();
+      setStatus("applying in-flight morph changes...");
+      const point = state.timeline[state.currentIndex];
+      const payload = {
+        duration_s: Number(document.getElementById("duration").value),
+        dt_s: Number(document.getElementById("dt").value),
+        state: {
+          t_s: point.t_s,
+          altitude_m: point.altitude_m,
+          downrange_m: point.downrange_m,
+          velocity_m_s: point.velocity_m_s,
+          gamma_deg: point.gamma_deg
+        },
+        ...getControlPayload()
+      };
+
+      try {
+        const apiBase = window.location.origin && window.location.origin.startsWith("http")
+          ? window.location.origin
+          : "http://127.0.0.1:8000";
+        const response = await fetch(new URL("/api/continue", apiBase).toString(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          throw new Error(`Continuation API failed (${response.status})`);
+        }
+        const data = await response.json();
+        state.vehicle = data.vehicle;
+        const merged = state.timeline
+          .slice(0, state.currentIndex + 1)
+          .concat(data.timeline.slice(1));
+        const nextIndex = Math.min(state.currentIndex + 1, merged.length - 1);
+        const summary = summarizeTimeline(merged, data.vehicle.tps_heat_limit_mw_m2);
+        render(summary, merged, { startIndex: nextIndex, autoplay: true });
+        setStatus(`ready | continued from t=${fmt(point.t_s, 1)}s | looping`);
+      } catch (err) {
+        setStatus(`error: ${err.message}`);
+      }
+    }
+
+    async function fetchProgram() {
+      try {
+        const apiBase = window.location.origin && window.location.origin.startsWith("http")
+          ? window.location.origin
+          : "http://127.0.0.1:8000";
+        const response = await fetch(new URL("/api/program", apiBase).toString());
+        if (!response.ok) {
+          throw new Error(`Program API failed (${response.status})`);
+        }
+        const data = await response.json();
+        renderProgram(data);
+      } catch (err) {
+        document.getElementById("programMission").textContent = `Program data unavailable: ${err.message}`;
+      }
+    }
+
+    document.getElementById("runBtn").addEventListener("click", runSimulation);
+    setStatus(`ready | api ${window.location.origin || "http://127.0.0.1:8000"}`);
+    updatePlaybackButton();
+    fetchProgram();
+    runSimulation();
+    });
+  </script>
+</body>
+</html>

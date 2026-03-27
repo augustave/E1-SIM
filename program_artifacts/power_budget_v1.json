@@ -1,0 +1,34 @@
+{
+  "artifact": "power_budget_v1",
+  "voltage_bus_vdc": 270,
+  "items": [
+    {
+      "subsystem": "Flight computer",
+      "power_w": 180
+    },
+    {
+      "subsystem": "Navigation / IMU / GNSS",
+      "power_w": 85
+    },
+    {
+      "subsystem": "Telemetry / secure datalink",
+      "power_w": 240
+    },
+    {
+      "subsystem": "TPS sensing and health monitoring",
+      "power_w": 65
+    },
+    {
+      "subsystem": "Actuation and control surfaces",
+      "power_w": 420
+    },
+    {
+      "subsystem": "Mission payload reserve",
+      "power_w": 350
+    }
+  ],
+  "total_continuous_power_w": 1340,
+  "growth_margin_pct": 20,
+  "total_with_margin_w": 1608.0,
+  "status": "notional architecture estimate"
+}

@@ -1,0 +1,12 @@
+{
+  "target_id": "PRTCTR-HATCH-AVBAY-001",
+  "part_type": "thin external access panel / hatch",
+  "prototype_process": [
+    "waterjet or rough trim blank",
+    "bench fixture locate on datum A/B/C",
+    "trim finish and drill hinge/latch interfaces",
+    "inspection holding fixture verification"
+  ],
+  "operator_robot_split": "manual prototype tooling",
+  "deformation_budget_note": "Locate on broad seal-land supports and low-force edge clamps only"
+}

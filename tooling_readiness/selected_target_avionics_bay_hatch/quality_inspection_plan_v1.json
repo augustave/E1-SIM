@@ -1,0 +1,10 @@
+{
+  "target_id": "PRTCTR-HATCH-AVBAY-001",
+  "inspection_method": "bench CMM or portable arm with hinge-pin master",
+  "critical_characteristics": [
+    "Datum A flatness",
+    "Hinge-pin axis position to datum B",
+    "Latch edge profile to datum A/B/C"
+  ],
+  "calibration_expectation": "Golden hatch master every 30 days or after impact event"
+}

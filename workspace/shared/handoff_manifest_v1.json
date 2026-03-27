@@ -1,0 +1,60 @@
+{
+  "workspace_name": "PROTCTR Four-Cell Workspace",
+  "cells": {
+    "vanguard": {
+      "role": "Market translation, mission framing, claims discipline",
+      "inputs": [
+        "validated claims",
+        "assurance feedback"
+      ],
+      "outputs": [
+        "market_requirements_doc_v1.md",
+        "mission_conops_v1.md",
+        "constraints_export_control_v1.md",
+        "capture_strategy_deck_v1.md"
+      ]
+    },
+    "architect": {
+      "role": "Flight sciences, MOSA architecture, subsystem definition",
+      "inputs": [
+        "vanguard handoff"
+      ],
+      "outputs": [
+        "architecture_spec_v1.json",
+        "power_budget_v1.json",
+        "rf_link_budget_v1.md",
+        "interface_control_doc_v1.md"
+      ]
+    },
+    "foundry": {
+      "role": "Avionics integration planning, manufacturable build package placeholders",
+      "inputs": [
+        "architect handoff"
+      ],
+      "outputs": [
+        "prototype_build_record_v1.md",
+        "pcb_fabrication_pack_v1.md",
+        "bringup_firmware_v1.md"
+      ]
+    },
+    "assurance": {
+      "role": "Validation, failure reporting, sign-off discipline",
+      "inputs": [
+        "foundry handoff"
+      ],
+      "outputs": [
+        "test_validation_report_v1.md",
+        "bug_report_v1.md",
+        "root_cause_analysis_v1.md"
+      ]
+    }
+  },
+  "current_mission": "Long-range desert surveillance and rapid-response pathfinder",
+  "current_claim_count": 4,
+  "operator_workflow": [
+    "Vanguard frames mission and guardrails",
+    "Architect defines interfaces and budgets",
+    "Foundry packages build intent and risks",
+    "Assurance validates and feeds claims back to Vanguard"
+  ]
+}

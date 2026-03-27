@@ -1,0 +1,11 @@
+{
+  "target_id": "PRTCTR-HATCH-AVBAY-001",
+  "primary_datum_A": "Outer seal-land plane",
+  "secondary_datum_B": "Vehicle longitudinal center plane through latch symmetry",
+  "tertiary_datum_C": "Forward hinge-pin axis",
+  "critical_characteristics": [
+    "hinge bore positional tolerance",
+    "latch interface flatness",
+    "seal-land profile continuity"
+  ]
+}
