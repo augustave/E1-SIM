@@ -3,969 +3,1797 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PROTCTR Aerodynamic Digital Twin</title>
+  <title>PROTCTR // RECOVERED FACILITY PLOT</title>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
 
     :root {
-      --bg-a: #070b13;
-      --bg-b: #101b2f;
-      --panel: rgba(8, 16, 30, 0.78);
-      --panel-border: rgba(168, 196, 236, 0.24);
-      --ink: #eaf3ff;
-      --muted: #8ea4c4;
-      --accent: #70e0ff;
-      --warning: #ff8a5b;
-      --good: #8cf7c2;
+      --abyssal-slate: #151B21;
+      --chalked-bone: #F1EFEA;
+      --ghost-teal: #5A8B8F;
+      --emergency-crimson: #A61922;
+      --slate-rgb: 21, 27, 33;
+      --bone-rgb: 241, 239, 234;
+      --teal-rgb: 90, 139, 143;
+      --crimson-rgb: 166, 25, 34;
+      --stroke: 1px;
+      --viewport-scale: 1;
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html,
     body {
       margin: 0;
-      color: var(--ink);
-      font-family: "Space Grotesk", "Avenir Next", sans-serif;
-      background:
-        radial-gradient(circle at 80% 0%, rgba(80, 186, 255, 0.15), transparent 34%),
-        radial-gradient(circle at 20% 100%, rgba(255, 131, 86, 0.12), transparent 38%),
-        linear-gradient(150deg, var(--bg-a), var(--bg-b));
-      min-height: 100vh;
+      min-height: 100%;
+      background: var(--abyssal-slate);
+      color: var(--chalked-bone);
+      font-family: "Oswald", "Arial Narrow", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .app {
-      width: min(1260px, 95vw);
-      margin: 20px auto 30px;
+    body {
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      opacity: 0.24;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(var(--bone-rgb), 0.12) 1px, transparent 0),
+        radial-gradient(circle at 2px 2px, rgba(var(--bone-rgb), 0.08) 1px, transparent 0),
+        repeating-linear-gradient(0deg, rgba(var(--bone-rgb), 0.04) 0 1px, transparent 1px 9px),
+        repeating-linear-gradient(90deg, rgba(var(--bone-rgb), 0.03) 0 1px, transparent 1px 11px);
+      background-size: 12px 12px, 17px 17px, 100% 6px, 9px 100%;
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      opacity: 0.18;
+      background-image:
+        repeating-linear-gradient(103deg, transparent 0 42px, rgba(var(--bone-rgb), 0.08) 42px 43px, transparent 43px 97px),
+        repeating-linear-gradient(84deg, transparent 0 58px, rgba(var(--bone-rgb), 0.05) 58px 59px, transparent 59px 119px);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: min(1480px, calc(100vw - 28px));
+      margin: 14px auto;
       display: grid;
-      grid-template-columns: minmax(320px, 360px) 1fr;
-      gap: 18px;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 12px;
     }
 
     .panel {
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+      border: var(--stroke) solid rgba(var(--bone-rgb), 0.62);
+      background: rgba(var(--slate-rgb), 0.9);
+      min-width: 0;
     }
 
-    .left {
-      padding: 18px;
+    .rail,
+    .stage {
       display: grid;
       gap: 12px;
       align-content: start;
     }
 
-    .right {
-      padding: 16px;
+    .block {
+      padding: 12px;
+      border: var(--stroke) solid rgba(var(--bone-rgb), 0.26);
       display: grid;
-      gap: 14px;
+      gap: 10px;
     }
 
-    h1 {
-      margin: 0 0 4px;
-      font-size: 1.45rem;
+    .mast {
+      display: grid;
+      gap: 6px;
+      padding: 14px 12px;
+      border: var(--stroke) solid rgba(var(--bone-rgb), 0.26);
+    }
+
+    .code-line,
+    .status-line,
+    .legend-line,
+    .artifact-link,
+    .note,
+    .metric-value,
+    .zoom-node,
+    .node-btn,
+    .corridor-label,
+    .range-value,
+    .timeline-readout,
+    .footnote,
+    .metric-key,
+    .legend-key,
+    .legend-value,
+    .index-label,
+    .tooltip-title {
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.06em;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1;
+      font-weight: 500;
+    }
+
+    .subtitle,
+    .lore,
+    .ghost-copy,
+    .annotation-copy,
+    .legend-value,
+    .footnote {
+      font-family: "IBM Plex Serif", serif;
+      font-style: italic;
+      text-transform: none;
       letter-spacing: 0.02em;
+      color: var(--ghost-teal);
     }
 
     .subtitle {
       margin: 0;
-      color: var(--muted);
-      font-size: 0.94rem;
-    }
-
-    .form-grid {
-      display: grid;
-      gap: 8px;
-      margin-top: 6px;
-    }
-
-    .control-grid {
-      display: grid;
-      gap: 8px;
-      margin-top: 2px;
-      padding-top: 8px;
-      border-top: 1px solid rgba(140, 189, 252, 0.14);
-    }
-
-    .control-title {
-      margin: 0;
-      font-size: 0.84rem;
-      color: var(--ink);
-    }
-
-    label {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
+      min-height: 20px;
       font-size: 0.9rem;
-      color: var(--muted);
-      align-items: center;
+      line-height: 1.25;
     }
 
-    input[type="range"] {
-      grid-column: 1 / -1;
-      width: 100%;
-      accent-color: var(--accent);
+    .code-line {
+      font-size: 0.72rem;
+      color: rgba(var(--bone-rgb), 0.72);
     }
 
-    .value {
-      color: var(--ink);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.86rem;
+    .section-title {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 500;
     }
 
-    .run-btn {
-      margin-top: 4px;
-      border: none;
-      background: linear-gradient(90deg, #62b8ff, #73f4c3);
-      color: #021227;
-      border-radius: 12px;
-      font-weight: 700;
-      padding: 11px 14px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: transform 0.18s ease, filter 0.18s ease;
-    }
-
-    .run-btn:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.07);
-    }
-
-    .button-row {
+    .index-row,
+    .legend-grid,
+    .metric-grid,
+    .button-grid,
+    .zoom-row,
+    .control-grid,
+    .artifact-grid,
+    .status-grid,
+    .chart-stack,
+    .summary-strip,
+    .viewport-head,
+    .annotation-head {
       display: grid;
-      grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
 
-    .ghost-btn {
-      border: 1px solid rgba(140, 189, 252, 0.24);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--ink);
-      border-radius: 12px;
-      font-weight: 600;
-      padding: 11px 14px;
-      font-family: inherit;
-      cursor: pointer;
+    .index-row {
+      grid-template-columns: repeat(3, 1fr);
     }
 
-    .ghost-btn:hover {
-      border-color: rgba(112, 224, 255, 0.5);
-      color: var(--accent);
+    .index-cell,
+    .legend-cell,
+    .metric-cell,
+    .node-btn,
+    .zoom-node,
+    .artifact-link,
+    .chart-card,
+    .annotation-box,
+    .timeline-box,
+    .status-box,
+    .control-box,
+    .viewport-box,
+    .registry-box {
+      border: var(--stroke) solid rgba(var(--bone-rgb), 0.44);
+      background: rgba(var(--slate-rgb), 0.82);
     }
 
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .metric {
-      padding: 10px;
-      border: 1px solid rgba(140, 189, 252, 0.18);
-      border-radius: 10px;
-      background: rgba(12, 27, 50, 0.45);
-    }
-
-    .metric .k {
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    .metric .v {
-      margin-top: 4px;
-      font-size: 1.02rem;
-      font-family: "IBM Plex Mono", monospace;
-    }
-
-    .blueprint-wrap {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      gap: 12px;
-    }
-
-    .blueprint {
-      width: 100%;
-      border-radius: 14px;
-      border: 1px solid rgba(166, 199, 237, 0.18);
-      background: linear-gradient(180deg, rgba(16, 32, 55, 0.5), rgba(8, 14, 26, 0.7));
+    .index-cell,
+    .legend-cell,
+    .metric-cell,
+    .status-box,
+    .timeline-box,
+    .registry-box,
+    .chart-card,
+    .annotation-box {
       padding: 8px;
     }
 
-    .part {
-      transition: filter 0.2s ease, fill 0.2s ease;
-      cursor: pointer;
+    .index-cell {
+      min-height: 58px;
     }
 
-    .part:hover {
-      filter: brightness(1.22);
+    .index-label {
+      font-size: 0.68rem;
+      color: rgba(var(--bone-rgb), 0.62);
     }
 
-    .part.active {
-      filter: drop-shadow(0 0 8px rgba(112, 224, 255, 0.7));
+    .index-value {
+      margin-top: 4px;
+      font-size: 0.94rem;
+      line-height: 1.1;
     }
 
-    .part-info {
-      border: 1px solid rgba(128, 182, 238, 0.2);
-      border-radius: 12px;
-      padding: 10px;
-      background: rgba(12, 24, 44, 0.62);
-      min-height: 110px;
+    .control-grid {
+      grid-template-columns: 1fr;
     }
 
-    .part-info h3 {
-      margin: 0 0 6px;
-      font-size: 0.95rem;
-    }
-
-    .part-info p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 0.88rem;
-    }
-
-    .slider-wrap {
+    .control-box {
+      padding: 8px;
       display: grid;
       gap: 6px;
     }
 
-    .slider-head {
+    .control-box label {
       display: flex;
       justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 0.74rem;
+    }
+
+    .range-value {
+      font-size: 0.82rem;
+      color: var(--chalked-bone);
+    }
+
+    input[type="range"] {
+      appearance: none;
+      width: 100%;
+      height: 16px;
+      margin: 0;
+      background: transparent;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 1px;
+      background: rgba(var(--bone-rgb), 0.54);
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 1px;
+      background: rgba(var(--bone-rgb), 0.54);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      margin-top: -6px;
+      border: var(--stroke) solid var(--chalked-bone);
+      background: var(--abyssal-slate);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border: var(--stroke) solid var(--chalked-bone);
+      background: var(--abyssal-slate);
+      border-radius: 0;
+    }
+
+    .button-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .node-btn,
+    .zoom-node {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 38px;
+      padding: 8px 10px;
+      color: var(--chalked-bone);
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 0.74rem;
+      font-weight: 500;
+      transition: none;
+      user-select: none;
+    }
+
+    .node-btn:hover,
+    .zoom-node:hover,
+    .part-node:hover .part-box,
+    .artifact-link:hover {
+      border-color: var(--chalked-bone);
+    }
+
+    .node-btn:active,
+    .node-btn[aria-pressed="true"],
+    .zoom-node.active,
+    .part-node.active .part-box {
+      background: var(--chalked-bone);
+      color: var(--abyssal-slate);
+    }
+
+    .legend-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .legend-cell {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .legend-key {
+      font-size: 0.68rem;
+    }
+
+    .legend-key.bone { color: var(--chalked-bone); }
+    .legend-key.teal { color: var(--ghost-teal); }
+    .legend-key.red { color: var(--emergency-crimson); }
+
+    .metric-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .metric-key {
+      font-size: 0.64rem;
+      color: rgba(var(--bone-rgb), 0.62);
+    }
+
+    .metric-value {
+      margin-top: 3px;
+      font-size: 1rem;
+    }
+
+    .status-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .status-box {
+      display: grid;
+      gap: 4px;
+    }
+
+    .status-line {
+      font-size: 0.72rem;
+      color: rgba(var(--bone-rgb), 0.76);
+      word-break: break-word;
+    }
+
+    .stage {
+      padding: 12px;
+    }
+
+    .viewport-head {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+    }
+
+    .viewport-head .ghost-copy {
+      margin: 0;
+      max-width: 540px;
+      font-size: 0.88rem;
+      line-height: 1.3;
+    }
+
+    .zoom-row {
+      grid-template-columns: repeat(3, 80px);
+    }
+
+    .viewport-box {
+      padding: 0;
+      overflow: hidden;
+      min-height: 520px;
+      position: relative;
+      background:
+        repeating-linear-gradient(0deg, rgba(var(--bone-rgb), 0.05) 0 1px, transparent 1px 44px),
+        repeating-linear-gradient(90deg, rgba(var(--bone-rgb), 0.05) 0 1px, transparent 1px 44px),
+        rgba(var(--slate-rgb), 0.96);
+      cursor: grab;
+    }
+
+    .viewport-box.dragging {
+      cursor: grabbing;
+    }
+
+    .schematic-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 960px;
+      height: 700px;
+      transform-origin: top left;
+      will-change: transform;
+    }
+
+    .schematic-canvas.booted .plot-line {
+      animation: plot-line 620ms steps(18, end) forwards;
+    }
+
+    .schematic-canvas.booted .node-plate {
+      animation: stamp-node 90ms steps(1, end) forwards;
+    }
+
+    @keyframes plot-line {
+      from { stroke-dashoffset: 600; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes stamp-node {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .plot-line {
+      fill: none;
+      stroke: rgba(var(--bone-rgb), 0.34);
+      stroke-width: 1;
+      stroke-dasharray: 8 6;
+      stroke-dashoffset: 600;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .guide-line {
+      fill: none;
+      stroke: rgba(var(--bone-rgb), 0.15);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .corridor {
+      fill: none;
+      stroke: rgba(var(--bone-rgb), 0.42);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .corridor.active {
+      stroke: var(--chalked-bone);
+    }
+
+    .corridor.alert {
+      stroke: var(--emergency-crimson);
+    }
+
+    .part-node {
+      cursor: pointer;
+    }
+
+    .part-box,
+    .part-label,
+    .part-mark,
+    .part-callout-box {
+      vector-effect: non-scaling-stroke;
+    }
+
+    .part-box {
+      fill: rgba(var(--slate-rgb), 0.9);
+      stroke: rgba(var(--bone-rgb), 0.68);
+      stroke-width: 1;
+    }
+
+    .part-node text {
+      fill: var(--chalked-bone);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+
+    .part-node .part-mark {
+      fill: none;
+      stroke: rgba(var(--bone-rgb), 0.32);
+      stroke-width: 1;
+      stroke-dasharray: 3 3;
+    }
+
+    .part-node.secondary .part-box {
+      stroke: var(--ghost-teal);
+    }
+
+    .part-node.secondary text {
+      fill: var(--ghost-teal);
+    }
+
+    .part-node.alert .part-box {
+      stroke: var(--emergency-crimson);
+      fill: rgba(var(--crimson-rgb), 0.16);
+    }
+
+    .part-node.alert text {
+      fill: var(--chalked-bone);
+    }
+
+    .part-node.active .part-box {
+      fill: var(--chalked-bone);
+      stroke: var(--chalked-bone);
+    }
+
+    .part-node.active text {
+      fill: var(--abyssal-slate);
+    }
+
+    .viewport-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .tooltip-box {
+      position: absolute;
+      min-width: 210px;
+      max-width: 260px;
+      padding: 8px 10px;
+      border: var(--stroke) solid rgba(var(--teal-rgb), 0.88);
+      background: rgba(var(--slate-rgb), 0.92);
+      color: var(--ghost-teal);
+      opacity: 0;
+      transform: translate(-9999px, -9999px);
+    }
+
+    .tooltip-box.visible {
+      opacity: 1;
+    }
+
+    .tooltip-box::before {
+      content: "";
+      position: absolute;
+      left: -34px;
+      top: 18px;
+      width: 34px;
+      height: 1px;
+      background: rgba(var(--teal-rgb), 0.88);
+      transform: rotate(-22deg);
+      transform-origin: right center;
+    }
+
+    .tooltip-title {
+      font-size: 0.72rem;
+      color: var(--ghost-teal);
+      margin-bottom: 4px;
+    }
+
+    .tooltip-copy {
+      margin: 0;
+      font-family: "IBM Plex Serif", serif;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: 0.02em;
+      font-size: 0.82rem;
+      line-height: 1.28;
+      color: var(--ghost-teal);
+    }
+
+    .summary-strip {
+      grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .annotation-box {
+      display: grid;
+      gap: 8px;
+      min-height: 166px;
+    }
+
+    .annotation-head {
+      grid-template-columns: auto 1fr;
       align-items: center;
       gap: 10px;
     }
 
-    .slider-wrap label {
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      font-size: 0.86rem;
+    .annotation-leader {
+      width: 38px;
+      height: 1px;
+      background: var(--ghost-teal);
+      transform: rotate(-18deg);
+      transform-origin: left center;
     }
 
-    .mini-btn {
-      border: 1px solid rgba(140, 189, 252, 0.24);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--ink);
-      border-radius: 999px;
-      padding: 6px 11px;
-      font-size: 0.75rem;
-      font-family: "IBM Plex Mono", monospace;
-      cursor: pointer;
+    .annotation-code {
+      font-size: 0.72rem;
+      color: var(--ghost-teal);
     }
 
-    .mini-btn:hover {
-      border-color: rgba(112, 224, 255, 0.5);
-      color: var(--accent);
+    .annotation-title {
+      margin: 0;
+      font-size: 0.88rem;
     }
 
-    .chart-grid {
+    .annotation-copy {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.35;
+      min-height: 58px;
+    }
+
+    .timeline-box {
       display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .timeline-readout {
+      font-size: 0.74rem;
+      color: rgba(var(--bone-rgb), 0.82);
+    }
+
+    .chart-stack {
       grid-template-columns: 1fr;
-      gap: 10px;
     }
 
     .chart-card {
-      border: 1px solid rgba(136, 182, 232, 0.18);
-      border-radius: 10px;
-      background: rgba(11, 23, 43, 0.58);
-      padding: 8px 8px 4px;
-    }
-
-    .chart-label {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin: 0 0 6px 2px;
-    }
-
-    canvas {
-      width: 100%;
-      height: 125px;
-      display: block;
-    }
-
-    .fine {
-      color: var(--muted);
-      font-size: 0.78rem;
-      font-family: "IBM Plex Mono", monospace;
-    }
-
-    .program-panel {
-      margin-top: 4px;
-      padding: 12px;
-      border: 1px solid rgba(136, 182, 232, 0.18);
-      border-radius: 12px;
-      background: rgba(10, 24, 43, 0.55);
       display: grid;
-      gap: 10px;
-    }
-
-    .program-title {
-      margin: 0;
-      font-size: 0.92rem;
-      color: var(--ink);
-    }
-
-    .program-copy {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.84rem;
-      line-height: 1.45;
-    }
-
-    .claims-list {
-      margin: 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 0.82rem;
-    }
-
-    .artifact-links {
-      display: flex;
-      flex-wrap: wrap;
       gap: 8px;
     }
 
+    .chart-title {
+      margin: 0;
+      font-size: 0.74rem;
+      color: rgba(var(--bone-rgb), 0.82);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 152px;
+      background: rgba(var(--slate-rgb), 0.94);
+      border: var(--stroke) solid rgba(var(--bone-rgb), 0.16);
+      image-rendering: pixelated;
+    }
+
+    .artifact-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .artifact-link {
-      color: var(--ink);
+      padding: 8px;
+      font-size: 0.68rem;
       text-decoration: none;
-      border: 1px solid rgba(140, 189, 252, 0.22);
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 0.76rem;
-      font-family: "IBM Plex Mono", monospace;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 40px;
     }
 
-    .artifact-link:hover {
-      border-color: rgba(112, 224, 255, 0.5);
-      color: var(--accent);
+    .footnote {
+      margin: 0;
+      font-size: 0.82rem;
+      line-height: 1.35;
     }
 
-    @media (max-width: 980px) {
-      .app {
+    .mobile-note {
+      display: none;
+      padding: 8px;
+      border: var(--stroke) solid rgba(var(--bone-rgb), 0.28);
+      font-size: 0.68rem;
+      color: rgba(var(--bone-rgb), 0.76);
+    }
+
+    @media (max-width: 1120px) {
+      .shell {
         grid-template-columns: 1fr;
       }
-      .blueprint-wrap {
+
+      .summary-strip {
         grid-template-columns: 1fr;
+      }
+
+      .viewport-box {
+        min-height: 430px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: calc(100vw - 18px);
+        margin: 9px auto;
+        gap: 9px;
+      }
+
+      .stage,
+      .rail {
+        padding: 10px;
+      }
+
+      .button-grid,
+      .artifact-grid,
+      .metric-grid,
+      .zoom-row,
+      .index-row {
+        grid-template-columns: 1fr;
+      }
+
+      .viewport-box {
+        min-height: 360px;
+      }
+
+      .mobile-note {
+        display: block;
       }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <section class="panel left">
-      <div>
-        <h1>PROTCTR Aerodynamic Digital Twin</h1>
-        <p class="subtitle">Interactive hypersonic slipstream and thermal envelope simulator</p>
+  <div class="shell">
+    <aside class="rail panel">
+      <div class="mast">
+        <div class="code-line">RECOVERED BLUEPRINT // INDEX 36A-72C // PROTCTR</div>
+        <h1 class="title">FACILITY PLOT</h1>
+        <p class="subtitle" id="subtitleLine"></p>
       </div>
 
-      <div class="form-grid">
-        <label>Duration (s) <span class="value" id="durationVal">260</span>
-          <input id="duration" type="range" min="20" max="600" step="10" value="260">
-        </label>
-        <label>Time Step (s) <span class="value" id="dtVal">0.5</span>
-          <input id="dt" type="range" min="0.1" max="2.0" step="0.1" value="0.5">
-        </label>
-        <label>Initial Altitude (m) <span class="value" id="altitudeVal">19000</span>
-          <input id="altitude" type="range" min="2000" max="42000" step="500" value="19000">
-        </label>
-        <label>Initial Mach <span class="value" id="machVal">3.4</span>
-          <input id="mach" type="range" min="0.8" max="8.5" step="0.1" value="3.4">
-        </label>
-        <label>Flight Path Angle (deg) <span class="value" id="gammaVal">9</span>
-          <input id="gamma" type="range" min="-10" max="25" step="1" value="9">
-        </label>
+      <div class="block">
+        <h2 class="section-title">INDEX // SURFACE STATE</h2>
+        <div class="index-row">
+          <div class="index-cell">
+            <div class="index-label">UNIT</div>
+            <div class="index-value">PROTCTR</div>
+          </div>
+          <div class="index-cell">
+            <div class="index-label">FRAME</div>
+            <div class="index-value" id="vehicleSpan">LOADING</div>
+          </div>
+          <div class="index-cell">
+            <div class="index-label">TPS LIM</div>
+            <div class="index-value" id="vehicleHeatLimit">LOADING</div>
+          </div>
+        </div>
       </div>
 
-      <div class="control-grid">
-        <p class="control-title">Morphing Flight Controls</p>
-        <label>Wing Morph (%) <span class="value" id="wingMorphVal">0</span>
-          <input id="wingMorph" type="range" min="-25" max="25" step="1" value="0">
-        </label>
-        <label>Flap Deflection (deg) <span class="value" id="flapVal">0</span>
-          <input id="flapDeflection" type="range" min="-5" max="20" step="1" value="0">
-        </label>
-        <label>Body Morph (%) <span class="value" id="bodyMorphVal">0</span>
-          <input id="bodyMorph" type="range" min="-20" max="20" step="1" value="0">
-        </label>
+      <div class="block">
+        <h2 class="section-title">CONTROL MATRIX // 36A</h2>
+        <div class="control-grid">
+          <div class="control-box">
+            <label><span>36A / WINDOW S</span><span class="range-value" id="durationVal">260</span></label>
+            <input id="duration" type="range" min="20" max="600" step="10" value="260">
+          </div>
+          <div class="control-box">
+            <label><span>36B / STEP S</span><span class="range-value" id="dtVal">0.5</span></label>
+            <input id="dt" type="range" min="0.1" max="2.0" step="0.1" value="0.5">
+          </div>
+          <div class="control-box">
+            <label><span>04C / ENTRY ALT M</span><span class="range-value" id="altitudeVal">19000</span></label>
+            <input id="altitude" type="range" min="2000" max="42000" step="500" value="19000">
+          </div>
+          <div class="control-box">
+            <label><span>04D / ENTRY MACH</span><span class="range-value" id="machVal">3.4</span></label>
+            <input id="mach" type="range" min="0.8" max="8.5" step="0.1" value="3.4">
+          </div>
+          <div class="control-box">
+            <label><span>04E / ENTRY GAMMA DEG</span><span class="range-value" id="gammaVal">9</span></label>
+            <input id="gamma" type="range" min="-10" max="25" step="1" value="9">
+          </div>
+        </div>
       </div>
 
-      <div class="button-row">
-        <button class="run-btn" id="runBtn">Run From Launch</button>
-        <button class="ghost-btn" id="applyMidflightBtn" type="button">Apply Mid-Flight</button>
+      <div class="block">
+        <h2 class="section-title">MORPH INDEX // 17A</h2>
+        <div class="control-grid">
+          <div class="control-box">
+            <label><span>17A / WING INDEX</span><span class="range-value" id="wingMorphVal">0</span></label>
+            <input id="wingMorph" type="range" min="-25" max="25" step="1" value="0">
+          </div>
+          <div class="control-box">
+            <label><span>17B / FLAP DEG</span><span class="range-value" id="flapVal">0</span></label>
+            <input id="flapDeflection" type="range" min="-5" max="20" step="1" value="0">
+          </div>
+          <div class="control-box">
+            <label><span>17C / BODY INDEX</span><span class="range-value" id="bodyMorphVal">0</span></label>
+            <input id="bodyMorph" type="range" min="-20" max="20" step="1" value="0">
+          </div>
+        </div>
+        <div class="button-grid">
+          <button class="node-btn" id="runBtn" type="button">NODE 01 / CYCLE</button>
+          <button class="node-btn" id="applyMidflightBtn" type="button">NODE 02 / PATCH</button>
+        </div>
       </div>
 
-      <div class="summary-grid">
-        <div class="metric"><div class="k">Peak Mach</div><div class="v" id="mPeak">-</div></div>
-        <div class="metric"><div class="k">Range (km)</div><div class="v" id="mRange">-</div></div>
-        <div class="metric"><div class="k">Peak Heat (MW/m²)</div><div class="v" id="mHeat">-</div></div>
-        <div class="metric"><div class="k">Max Altitude (km)</div><div class="v" id="mAlt">-</div></div>
-        <div class="metric"><div class="k">Min TPS Margin</div><div class="v" id="mTps">-</div></div>
-        <div class="metric"><div class="k">Max L/D</div><div class="v" id="mLd">-</div></div>
+      <div class="block">
+        <h2 class="section-title">LEGEND // KEY</h2>
+        <div class="legend-grid">
+          <div class="legend-cell">
+            <div class="legend-key bone">BONE</div>
+            <div class="legend-value">Primary structure, active node inversion, rigid tabular data.</div>
+          </div>
+          <div class="legend-cell">
+            <div class="legend-key teal">TEAL</div>
+            <div class="legend-value">Forensic annotation, subsystem commentary, spatial hints.</div>
+          </div>
+          <div class="legend-cell">
+            <div class="legend-key red">RED</div>
+            <div class="legend-value">Heat breach, fatal warning, corridor failure, exit state.</div>
+          </div>
+        </div>
       </div>
 
-      <div class="program-panel">
-        <p class="program-title">Autonomous Aerospace Collective Revision</p>
-        <p class="program-copy" id="programMission">Loading mission and architecture artifacts...</p>
-        <ul class="claims-list" id="claimsList"></ul>
-        <div class="artifact-links" id="artifactLinks"></div>
+      <div class="block">
+        <h2 class="section-title">READOUT // 4</h2>
+        <div class="metric-grid">
+          <div class="metric-cell"><div class="metric-key">M-01 PEAK MACH</div><div class="metric-value" id="mPeak">-</div></div>
+          <div class="metric-cell"><div class="metric-key">M-02 RANGE KM</div><div class="metric-value" id="mRange">-</div></div>
+          <div class="metric-cell"><div class="metric-key">M-03 HEAT MW/M²</div><div class="metric-value" id="mHeat">-</div></div>
+          <div class="metric-cell"><div class="metric-key">M-04 ALT KM</div><div class="metric-value" id="mAlt">-</div></div>
+          <div class="metric-cell"><div class="metric-key">M-05 TPS MARGIN</div><div class="metric-value" id="mTps">-</div></div>
+          <div class="metric-cell"><div class="metric-key">M-06 L/D MAX</div><div class="metric-value" id="mLd">-</div></div>
+        </div>
       </div>
 
-      <div class="fine" id="status">Status: idle</div>
-    </section>
+      <div class="block">
+        <h2 class="section-title">ARCHIVE // MISSION LEDGER</h2>
+        <div class="registry-box">
+          <div class="code-line">QUALITY ASSURANCE // TRACE PACK</div>
+          <p class="footnote" id="programMission">ARCHIVE BUS NOT YET RESOLVED.</p>
+        </div>
+        <div class="artifact-grid" id="artifactLinks"></div>
+      </div>
 
-    <section class="panel right">
-      <div class="blueprint-wrap">
-        <div class="blueprint">
-          <svg id="blueprintSvg" viewBox="0 0 560 280" width="100%" height="250" aria-label="PROTCTR Blueprint">
-            <defs>
-              <linearGradient id="bodyGrad" x1="0" x2="1" y1="0.5" y2="0.5">
-                <stop offset="0%" stop-color="#27384e"/>
-                <stop offset="50%" stop-color="#384f6c"/>
-                <stop offset="100%" stop-color="#27384e"/>
-              </linearGradient>
-            </defs>
-            <rect x="0" y="0" width="560" height="280" fill="transparent"/>
-            <polygon id="leftWing" class="part" data-part="leftWing" points="275,134 100,55 42,82 225,145" fill="#28384d" stroke="#8db7db" stroke-width="1.2"/>
-            <polygon id="rightWing" class="part" data-part="rightWing" points="275,146 225,135 42,198 100,225" fill="#28384d" stroke="#8db7db" stroke-width="1.2"/>
-            <polygon id="leftFlap" class="part" data-part="leftFlap" points="226,136 178,118 164,122 212,141" fill="#35506f" stroke="#b7d7f7" stroke-width="0.9"/>
-            <polygon id="rightFlap" class="part" data-part="rightFlap" points="226,144 212,139 164,158 178,162" fill="#35506f" stroke="#b7d7f7" stroke-width="0.9"/>
-            <polygon id="body" class="part" data-part="body" points="70,140 240,90 492,130 545,140 492,150 240,190" fill="url(#bodyGrad)" stroke="#cce1f7" stroke-width="1.4"/>
-            <polygon id="spine" class="part" data-part="spine" points="236,121 396,132 478,139 396,147 236,158 274,140" fill="#425d81" stroke="#b7d7f7" stroke-width="1"/>
-            <polygon id="nose" class="part" data-part="nose" points="50,131 78,137 78,143 50,149 18,140" fill="#495f7a" stroke="#dceeff" stroke-width="1.2"/>
-            <polygon id="tailL" class="part" data-part="tailL" points="492,129 538,90 552,94 510,136" fill="#314763" stroke="#a5c8ec" stroke-width="1"/>
-            <polygon id="tailR" class="part" data-part="tailR" points="492,151 510,144 552,186 538,190" fill="#314763" stroke="#a5c8ec" stroke-width="1"/>
-            <text x="88" y="129" fill="#dbe8f6" font-size="15" font-family="'IBM Plex Mono', monospace">E1</text>
-            <text x="360" y="165" fill="#9cb5d0" font-size="11" font-family="'IBM Plex Mono', monospace">PROTCTR</text>
+      <div class="block">
+        <h2 class="section-title">LINE STATUS // TELEMETRY</h2>
+        <div class="status-grid">
+          <div class="status-box">
+            <div class="status-line" id="status">STATUS // IDLE</div>
+            <div class="status-line" id="statusDetail">PATH // UNBOUND</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="stage panel">
+      <div class="viewport-head">
+        <div>
+          <div class="code-line">SECTOR 4 // ORTHOGONAL PLAN // CLICK NODE TO ACTUATE CORRIDOR</div>
+          <p class="ghost-copy">The canvas behaves as recovered facility paper: drag to pan, use discrete magnification, and read the craft as indexed inventory rather than friendly product.</p>
+        </div>
+        <div class="zoom-row">
+          <button class="zoom-node active" data-zoom="0.5" type="button">50%</button>
+          <button class="zoom-node" data-zoom="1" type="button">100%</button>
+          <button class="zoom-node" data-zoom="2" type="button">200%</button>
+        </div>
+      </div>
+
+      <div class="mobile-note">PAN IS DRAG-BOUND. ON SMALL VIEWPORTS, USE 50% MAGNIFICATION TO SURVEY THE FULL NODE FIELD.</div>
+
+      <div class="viewport-box" id="viewportBox">
+        <div class="schematic-canvas" id="schematicCanvas">
+          <svg id="blueprintSvg" viewBox="0 0 960 700" width="960" height="700" aria-label="Recovered PROTCTR blueprint plot">
+            <g>
+              <path class="guide-line" d="M40 80 H920" />
+              <path class="guide-line" d="M40 140 H920" />
+              <path class="guide-line" d="M40 200 H920" />
+              <path class="guide-line" d="M40 260 H920" />
+              <path class="guide-line" d="M40 320 H920" />
+              <path class="guide-line" d="M40 380 H920" />
+              <path class="guide-line" d="M40 440 H920" />
+              <path class="guide-line" d="M40 500 H920" />
+              <path class="guide-line" d="M40 560 H920" />
+              <path class="guide-line" d="M40 620 H920" />
+              <path class="guide-line" d="M80 40 V660" />
+              <path class="guide-line" d="M160 40 V660" />
+              <path class="guide-line" d="M240 40 V660" />
+              <path class="guide-line" d="M320 40 V660" />
+              <path class="guide-line" d="M400 40 V660" />
+              <path class="guide-line" d="M480 40 V660" />
+              <path class="guide-line" d="M560 40 V660" />
+              <path class="guide-line" d="M640 40 V660" />
+              <path class="guide-line" d="M720 40 V660" />
+              <path class="guide-line" d="M800 40 V660" />
+              <path class="guide-line" d="M880 40 V660" />
+            </g>
+
+            <g>
+              <path class="plot-line" d="M96 166 H212 V250 H256" />
+              <path class="plot-line" d="M760 132 H870 V228 H748" />
+              <path class="plot-line" d="M760 568 H882 V474 H760" />
+              <path class="plot-line" d="M128 534 H208 V454 H254" />
+              <path class="plot-line" d="M398 64 V182 H470" />
+              <path class="plot-line" d="M420 636 V534 H470" />
+              <path class="plot-line" d="M112 346 H202 V350 H256" />
+              <path class="plot-line" d="M760 350 H866 V350 H760" />
+            </g>
+
+            <g id="corridors">
+              <path id="corridor-leftWing" class="corridor" d="M212 250 H256 V262 H258" />
+              <path id="corridor-rightWing" class="corridor" d="M208 454 H256 V438 H258" />
+              <path id="corridor-nose" class="corridor" d="M202 350 H258" />
+              <path id="corridor-body" class="corridor" d="M470 350 H618" />
+              <path id="corridor-spine" class="corridor" d="M470 182 V214 H470" />
+              <path id="corridor-leftFlap" class="corridor" d="M470 118 V214" />
+              <path id="corridor-rightFlap" class="corridor" d="M470 582 V486" />
+              <path id="corridor-tailL" class="corridor" d="M748 228 H760" />
+              <path id="corridor-tailR" class="corridor" d="M760 474 H760" />
+            </g>
+
+            <g class="node-plate part-node" id="part-leftWing" data-part="leftWing">
+              <rect class="part-box" x="258" y="214" width="276" height="66" />
+              <rect class="part-mark" x="266" y="222" width="260" height="50" />
+              <text x="282" y="252">11A / PORT CHINE</text>
+            </g>
+
+            <g class="node-plate part-node secondary" id="part-leftFlap" data-part="leftFlap">
+              <rect class="part-box" x="438" y="96" width="168" height="42" />
+              <text x="456" y="122">17B / PORT FLAP</text>
+            </g>
+
+            <g class="node-plate part-node" id="part-nose" data-part="nose">
+              <rect class="part-box" x="258" y="314" width="104" height="72" />
+              <rect class="part-mark" x="266" y="322" width="88" height="56" />
+              <text x="278" y="355">01A / NOSE</text>
+            </g>
+
+            <g class="node-plate part-node" id="part-body" data-part="body">
+              <rect class="part-box" x="362" y="258" width="330" height="186" />
+              <rect class="part-mark" x="378" y="274" width="298" height="154" />
+              <text x="402" y="350">03C / PRIMARY BODY</text>
+            </g>
+
+            <g class="node-plate part-node secondary" id="part-spine" data-part="spine">
+              <rect class="part-box" x="418" y="220" width="250" height="58" />
+              <text x="444" y="255">09D / DORSAL SPINE</text>
+            </g>
+
+            <g class="node-plate part-node" id="part-rightWing" data-part="rightWing">
+              <rect class="part-box" x="258" y="420" width="276" height="66" />
+              <rect class="part-mark" x="266" y="428" width="260" height="50" />
+              <text x="272" y="458">11B / STBD CHINE</text>
+            </g>
+
+            <g class="node-plate part-node secondary" id="part-rightFlap" data-part="rightFlap">
+              <rect class="part-box" x="438" y="560" width="176" height="42" />
+              <text x="454" y="586">17C / STBD FLAP</text>
+            </g>
+
+            <g class="node-plate part-node" id="part-tailL" data-part="tailL">
+              <rect class="part-box" x="692" y="204" width="172" height="52" />
+              <text x="716" y="236">22A / V-TAIL P</text>
+            </g>
+
+            <g class="node-plate part-node" id="part-tailR" data-part="tailR">
+              <rect class="part-box" x="692" y="444" width="172" height="52" />
+              <text x="714" y="476">22B / V-TAIL S</text>
+            </g>
+
+            <g>
+              <rect x="88" y="140" width="124" height="52" fill="none" stroke="rgba(90, 139, 143, 0.86)" stroke-width="1" />
+              <text x="104" y="170" fill="#5A8B8F" font-family="'IBM Plex Mono', monospace" font-size="12">SECTOR 1 / ENTRY</text>
+              <rect x="778" y="104" width="128" height="52" fill="none" stroke="rgba(90, 139, 143, 0.86)" stroke-width="1" />
+              <text x="794" y="134" fill="#5A8B8F" font-family="'IBM Plex Mono', monospace" font-size="12">SECTOR 4 / WAKE</text>
+              <rect x="770" y="548" width="138" height="52" fill="none" stroke="rgba(90, 139, 143, 0.86)" stroke-width="1" />
+              <text x="786" y="578" fill="#5A8B8F" font-family="'IBM Plex Mono', monospace" font-size="12">SECTOR 7 / STAB</text>
+              <text x="770" y="324" fill="#F1EFEA" font-family="'IBM Plex Mono', monospace" font-size="14">PROTCTR</text>
+              <text x="150" y="346" fill="#F1EFEA" font-family="'IBM Plex Mono', monospace" font-size="14">E1</text>
+            </g>
           </svg>
         </div>
-        <div class="part-info">
-          <h3 id="partTitle">Blueprint Focus</h3>
-          <p id="partDesc">Select a region to inspect how geometry influences compression, lift generation, and heating.</p>
+        <div class="viewport-overlay">
+          <div id="tooltipBox" class="tooltip-box" aria-hidden="true">
+            <div class="tooltip-title" id="tooltipTitle">00A / NODE</div>
+            <p class="tooltip-copy" id="tooltipCopy">Annotation bus.</p>
+          </div>
         </div>
       </div>
 
-      <div class="slider-wrap">
-        <div class="slider-head">
-          <label>Timeline Scrubber <span id="timelineLabel">t=0s</span></label>
-          <button class="mini-btn" id="playPauseBtn" type="button">Pause Loop</button>
+      <div class="summary-strip">
+        <div class="annotation-box">
+          <div class="annotation-head">
+            <div class="annotation-leader"></div>
+            <div class="annotation-code" id="annotationCode">11A / PORT CHINE</div>
+          </div>
+          <h2 class="annotation-title" id="partTitle">PORT CHINE / COMPRESSION BAY</h2>
+          <p class="annotation-copy" id="partDesc">Shock-capture surface inventory. Hovering or selecting a node hardens the linked corridors and relocates the viewport across the archive plane.</p>
+          <div class="button-grid">
+            <button class="node-btn" id="playPauseBtn" type="button" aria-pressed="false">NODE 03 / HOLD</button>
+            <button class="node-btn" id="resetViewBtn" type="button">NODE 04 / CENTER</button>
+          </div>
         </div>
-        <input id="timeline" type="range" min="0" max="0" step="1" value="0">
-      </div>
 
-      <div class="chart-grid">
-        <div class="chart-card">
-          <p class="chart-label">Altitude Profile (km)</p>
-          <canvas id="altChart" width="940" height="220"></canvas>
-        </div>
-        <div class="chart-card">
-          <p class="chart-label">Mach Profile</p>
-          <canvas id="machChart" width="940" height="220"></canvas>
-        </div>
-        <div class="chart-card">
-          <p class="chart-label">Thermal Envelope (MW/m²)</p>
-          <canvas id="heatChart" width="940" height="220"></canvas>
+        <div class="timeline-box">
+          <div class="timeline-readout" id="timelineLabel">T+000.0 // MACH 0.00 // HEAT 0.000</div>
+          <input id="timeline" type="range" min="0" max="0" step="1" value="0">
+          <div class="chart-stack">
+            <div class="chart-card">
+              <p class="chart-title">36A / ALTITUDE TRACE KM</p>
+              <canvas id="altChart" width="920" height="180"></canvas>
+            </div>
+            <div class="chart-card">
+              <p class="chart-title">36B / MACH TRACE</p>
+              <canvas id="machChart" width="920" height="180"></canvas>
+            </div>
+            <div class="chart-card">
+              <p class="chart-title">36C / HEAT TRACE MW/M²</p>
+              <canvas id="heatChart" width="920" height="180"></canvas>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
+    </main>
   </div>
 
   <script>
-    function setStatusText(text) {
-      const statusEl = document.getElementById("status");
-      if (statusEl) {
-        statusEl.textContent = `Status: ${text}`;
+    const subtitleTarget = "Recovered hostile blueprint of a dying monolith.";
+    const subtitleNode = document.getElementById("subtitleLine");
+    let subtitleIndex = 0;
+    function typeSubtitle() {
+      subtitleNode.textContent = subtitleTarget.slice(0, subtitleIndex);
+      if (subtitleIndex < subtitleTarget.length) {
+        subtitleIndex += 1;
+        window.setTimeout(typeSubtitle, 15);
       }
     }
 
+    function setStatus(main, detail) {
+      document.getElementById("status").textContent = `STATUS // ${main}`;
+      document.getElementById("statusDetail").textContent = `PATH // ${detail}`;
+    }
+
     window.addEventListener("error", (event) => {
-      setStatusText(`ui error: ${event.message}`);
+      setStatus("UI FAULT", event.message || "UNKNOWN EXCEPTION");
     });
 
     window.addEventListener("unhandledrejection", (event) => {
       const reason = event.reason && event.reason.message ? event.reason.message : String(event.reason);
-      setStatusText(`ui promise error: ${reason}`);
+      setStatus("PROMISE FAULT", reason);
     });
 
     document.addEventListener("DOMContentLoaded", () => {
-    const partMetadata = {
-      nose: {
-        title: "Spatulate Nose Cone",
-        desc: "Razor-flat forebody that initiates controlled shock formation and minimizes stochastic local heating spikes."
-      },
-      leftWing: {
-        title: "Port Waverider Chine",
-        desc: "Highly swept compression surface tuned to trap and ride oblique shock energy for usable lift."
-      },
-      rightWing: {
-        title: "Starboard Waverider Chine",
-        desc: "Mirrored compression geometry sustaining shock-attached lift at high Mach while managing drag growth."
-      },
-      leftFlap: {
-        title: "Port Flap Surface",
-        desc: "Trailing-edge control surface used to bias lift, trim, and transient path shaping during morph transitions."
-      },
-      rightFlap: {
-        title: "Starboard Flap Surface",
-        desc: "Mirrored trailing-edge surface contributing incremental lift and control authority at the cost of added drag."
-      },
-      body: {
-        title: "Blended Main Body",
-        desc: "Elongated fineness-ratio core that couples waverider loading with low-separation fore-to-aft flow."
-      },
-      spine: {
-        title: "Dorsal Aerodynamic Spine",
-        desc: "Central ridge associated with compression management and likely propulsion duct integration."
-      },
-      tailL: {
-        title: "Twin Stabilizer (Port)",
-        desc: "Outboard/canted tail surface positioned to preserve directional stability outside the dominant wake."
-      },
-      tailR: {
-        title: "Twin Stabilizer (Starboard)",
-        desc: "Paired vertical control surface contributing yaw damping and high-speed directional authority."
-      }
-    };
+      typeSubtitle();
 
-    const state = {
-      timeline: [],
-      summary: null,
-      vehicle: null,
-      peakHeat: 1,
-      peakQ: 1,
-      currentIndex: 0,
-      playbackHandle: null,
-      isPlaying: false,
-      playbackToken: 0
-    };
-    const PLAYBACK_INTERVAL_MS = 85;
-
-    const ids = ["duration", "dt", "altitude", "mach", "gamma", "wingMorph", "flapDeflection", "bodyMorph"];
-    for (const id of ids) {
-      const input = document.getElementById(id);
-      const valueIdMap = {
-        wingMorph: "wingMorphVal",
-        flapDeflection: "flapVal",
-        bodyMorph: "bodyMorphVal"
-      };
-      const val = document.getElementById(valueIdMap[id] || (id + "Val"));
-      input.addEventListener("input", () => {
-        val.textContent = input.value;
-        if (id === "wingMorph" || id === "flapDeflection" || id === "bodyMorph") {
-          stopPlayback();
-          applyGeometryTransforms(getControlPayload());
-          setStatus("controls staged | press Apply Mid-Flight to continue");
+      const partMetadata = {
+        nose: {
+          code: "01A / NOSE",
+          title: "SPATULATE ENTRY CLEAVER",
+          desc: "Forebody breach plane. It collapses the first compression event and takes the earliest thermal punishment.",
+          corridor: "corridor-nose",
+          center: { x: 310, y: 350 },
+          tooltip: "Initial compression inventory. Heat excursions stain this node first."
+        },
+        leftWing: {
+          code: "11A / PORT CHINE",
+          title: "PORT CHINE / COMPRESSION BAY",
+          desc: "Primary shock-riding shelf. Lift is extracted here by holding the oblique structure close to the body inventory.",
+          corridor: "corridor-leftWing",
+          center: { x: 396, y: 246 },
+          tooltip: "Port lift plane. Corridor hardens when this node is actuated."
+        },
+        rightWing: {
+          code: "11B / STBD CHINE",
+          title: "STARBOARD CHINE / COMPRESSION BAY",
+          desc: "Mirrored shelf for captured pressure loading. Flight path authority degrades if this region overheats or departs symmetry.",
+          corridor: "corridor-rightWing",
+          center: { x: 396, y: 452 },
+          tooltip: "Starboard lift plane. Use with port comparison for load symmetry."
+        },
+        leftFlap: {
+          code: "17B / PORT FLAP",
+          title: "PORT FLAP / TRIM APPENDAGE",
+          desc: "Incremental control plate. Drag debt rises as deflection is purchased for trim recovery or path correction.",
+          corridor: "corridor-leftFlap",
+          center: { x: 522, y: 118 },
+          tooltip: "Port trim node. Movement buys authority and costs corridor cleanliness."
+        },
+        rightFlap: {
+          code: "17C / STBD FLAP",
+          title: "STARBOARD FLAP / TRIM APPENDAGE",
+          desc: "Mirrored aft control plate. Excess deflection contaminates the wake and raises the drag ledger.",
+          corridor: "corridor-rightFlap",
+          center: { x: 526, y: 582 },
+          tooltip: "Starboard trim node. Monitor drag growth during aggressive patches."
+        },
+        body: {
+          code: "03C / PRIMARY BODY",
+          title: "PRIMARY BODY / INVENTORY CORE",
+          desc: "Main blended volume. This mass couples range, internal systems, and the long violent slipstream corridor behind the vehicle.",
+          corridor: "corridor-body",
+          center: { x: 528, y: 350 },
+          tooltip: "Central archive volume. Range and TPS margin are read against this inventory."
+        },
+        spine: {
+          code: "09D / DORSAL SPINE",
+          title: "DORSAL SPINE / DUCT TRACE",
+          desc: "Raised dorsal channel linked to compression management and probable scramjet feed geometry. A rigid seam through the archive.",
+          corridor: "corridor-spine",
+          center: { x: 544, y: 249 },
+          tooltip: "Duct trace. Secondary note channel used for propulsion inference."
+        },
+        tailL: {
+          code: "22A / V-TAIL P",
+          title: "PORT V-TAIL / OUTBOARD STABILIZER",
+          desc: "Port wake-edge stabilizer. Kept outside the hottest corridor to preserve directional inventory under plasma wash.",
+          corridor: "corridor-tailL",
+          center: { x: 778, y: 230 },
+          tooltip: "Port stabilizer. Wake-edge authority node."
+        },
+        tailR: {
+          code: "22B / V-TAIL S",
+          title: "STARBOARD V-TAIL / OUTBOARD STABILIZER",
+          desc: "Starboard directional stabilizer. It survives by standing outside the central violence where the wake loses coherence.",
+          corridor: "corridor-tailR",
+          center: { x: 778, y: 470 },
+          tooltip: "Starboard stabilizer. Compare with port for thermal asymmetry."
         }
-      });
-    }
+      };
 
-    function fmt(n, digits = 2) {
-      return Number(n).toFixed(digits);
-    }
+      const state = {
+        timeline: [],
+        summary: null,
+        vehicle: null,
+        peakHeat: 1,
+        peakQ: 1,
+        currentIndex: 0,
+        playbackHandle: null,
+        isPlaying: false,
+        playbackToken: 0,
+        selectedPart: "body",
+        currentPoint: null,
+        viewport: {
+          scale: 0.5,
+          panX: 0,
+          panY: 0,
+          dragging: false,
+          dragOriginX: 0,
+          dragOriginY: 0,
+          dragStartPanX: 0,
+          dragStartPanY: 0
+        }
+      };
 
-    function setStatus(text) {
-      setStatusText(text);
-    }
+      const PLAYBACK_INTERVAL_MS = 95;
+      const CANVAS_WIDTH = 960;
+      const CANVAS_HEIGHT = 700;
+      const viewportBox = document.getElementById("viewportBox");
+      const schematicCanvas = document.getElementById("schematicCanvas");
+      const tooltipBox = document.getElementById("tooltipBox");
+      const tooltipTitle = document.getElementById("tooltipTitle");
+      const tooltipCopy = document.getElementById("tooltipCopy");
+      const claimsList = [];
 
-    function updatePlaybackButton() {
-      document.getElementById("playPauseBtn").textContent = state.isPlaying ? "Pause Loop" : "Resume Loop";
-    }
-
-    function stopPlayback() {
-      state.playbackToken += 1;
-      if (state.playbackHandle !== null) {
-        window.clearInterval(state.playbackHandle);
-        state.playbackHandle = null;
+      function bindRange(id, valueId) {
+        const input = document.getElementById(id);
+        const output = document.getElementById(valueId || `${id}Val`);
+        input.addEventListener("input", () => {
+          output.textContent = input.value;
+          if (["wingMorph", "flapDeflection", "bodyMorph"].includes(id)) {
+            stopPlayback();
+            applyGeometryTransforms(getControlPayload());
+            refreshBlueprintStyles();
+            setStatus("PATCH STAGED", "NODE 02 / PATCH TO CONTINUE");
+          }
+        });
       }
-      state.isPlaying = false;
-      updatePlaybackButton();
-    }
 
-    function startPlayback() {
-      if (!state.timeline.length) return;
-      state.playbackToken += 1;
-      const token = state.playbackToken;
-      if (state.playbackHandle !== null) {
-        window.clearInterval(state.playbackHandle);
+      bindRange("duration", "durationVal");
+      bindRange("dt", "dtVal");
+      bindRange("altitude", "altitudeVal");
+      bindRange("mach", "machVal");
+      bindRange("gamma", "gammaVal");
+      bindRange("wingMorph", "wingMorphVal");
+      bindRange("flapDeflection", "flapVal");
+      bindRange("bodyMorph", "bodyMorphVal");
+
+      function fmt(n, digits = 2) {
+        return Number(n).toFixed(digits);
       }
-      state.isPlaying = true;
-      updatePlaybackButton();
-      state.playbackHandle = window.setInterval(() => {
-        if (!state.isPlaying || token !== state.playbackToken) {
+
+      function getControlPayload() {
+        return {
+          wing_morph_pct: Number(document.getElementById("wingMorph").value) / 100,
+          flap_deflection_deg: Number(document.getElementById("flapDeflection").value),
+          body_morph_pct: Number(document.getElementById("bodyMorph").value) / 100
+        };
+      }
+
+      function syncControlInputs(controls) {
+        document.getElementById("wingMorph").value = String(Math.round(controls.wing_morph_pct * 100));
+        document.getElementById("flapDeflection").value = String(Math.round(controls.flap_deflection_deg));
+        document.getElementById("bodyMorph").value = String(Math.round(controls.body_morph_pct * 100));
+        document.getElementById("wingMorphVal").textContent = document.getElementById("wingMorph").value;
+        document.getElementById("flapVal").textContent = document.getElementById("flapDeflection").value;
+        document.getElementById("bodyMorphVal").textContent = document.getElementById("bodyMorph").value;
+      }
+
+      function summarizeTimeline(timeline, heatLimit) {
+        return {
+          max_mach: Math.max(...timeline.map((p) => p.mach)),
+          max_altitude_km: Math.max(...timeline.map((p) => p.altitude_m)) / 1000,
+          range_km: timeline[timeline.length - 1].downrange_m / 1000,
+          peak_heat_flux_mw_m2: Math.max(...timeline.map((p) => p.heat_flux_mw_m2)),
+          min_tps_margin_mw_m2: Math.min(...timeline.map((p) => p.tps_margin_mw_m2)),
+          max_ld_ratio: Math.max(...timeline.map((p) => p.ld_ratio)),
+          samples: timeline.length,
+          time_over_tps_limit_pct:
+            100 * timeline.filter((p) => p.heat_flux_mw_m2 > heatLimit).length / Math.max(timeline.length, 1)
+        };
+      }
+
+      function updatePlaybackButton() {
+        const button = document.getElementById("playPauseBtn");
+        button.textContent = state.isPlaying ? "NODE 03 / HOLD" : "NODE 03 / RESUME";
+        button.setAttribute("aria-pressed", state.isPlaying ? "true" : "false");
+      }
+
+      function stopPlayback() {
+        state.playbackToken += 1;
+        if (state.playbackHandle !== null) {
+          window.clearInterval(state.playbackHandle);
+          state.playbackHandle = null;
+        }
+        state.isPlaying = false;
+        updatePlaybackButton();
+      }
+
+      function startPlayback() {
+        if (!state.timeline.length) {
           return;
         }
-        const nextIndex =
-          state.currentIndex >= state.timeline.length - 1
-            ? 0
-            : state.currentIndex + 1;
-        updateAtIndex(nextIndex);
-      }, PLAYBACK_INTERVAL_MS);
-    }
-
-    function togglePlayback() {
-      if (state.isPlaying) {
-        stopPlayback();
-      } else {
-        startPlayback();
+        state.playbackToken += 1;
+        const token = state.playbackToken;
+        if (state.playbackHandle !== null) {
+          window.clearInterval(state.playbackHandle);
+        }
+        state.isPlaying = true;
+        updatePlaybackButton();
+        state.playbackHandle = window.setInterval(() => {
+          if (!state.isPlaying || token !== state.playbackToken) {
+            return;
+          }
+          const nextIndex = state.currentIndex >= state.timeline.length - 1 ? 0 : state.currentIndex + 1;
+          updateAtIndex(nextIndex);
+        }, PLAYBACK_INTERVAL_MS);
       }
-    }
 
-    function getControlPayload() {
-      return {
-        wing_morph_pct: Number(document.getElementById("wingMorph").value) / 100,
-        flap_deflection_deg: Number(document.getElementById("flapDeflection").value),
-        body_morph_pct: Number(document.getElementById("bodyMorph").value) / 100
-      };
-    }
+      function togglePlayback() {
+        if (state.isPlaying) {
+          stopPlayback();
+        } else {
+          startPlayback();
+        }
+      }
 
-    function applyGeometryTransforms(controls) {
-      const wingShift = 18 * controls.wing_morph_pct;
-      const wingRotate = -10 * controls.wing_morph_pct;
-      const bodyScaleY = 1 + 0.32 * controls.body_morph_pct;
-      const flapRotate = controls.flap_deflection_deg * 0.75;
+      function clampPan(x, y, scale = state.viewport.scale) {
+        const viewportWidth = viewportBox.clientWidth;
+        const viewportHeight = viewportBox.clientHeight;
+        const scaledWidth = CANVAS_WIDTH * scale;
+        const scaledHeight = CANVAS_HEIGHT * scale;
+        if (scaledWidth <= viewportWidth && scaledHeight <= viewportHeight) {
+          return {
+            x: (viewportWidth - scaledWidth) / 2,
+            y: (viewportHeight - scaledHeight) / 2
+          };
+        }
+        if (scaledWidth <= viewportWidth) {
+          return {
+            x: (viewportWidth - scaledWidth) / 2,
+            y: Math.max(viewportHeight - scaledHeight, Math.min(0, y))
+          };
+        }
+        if (scaledHeight <= viewportHeight) {
+          return {
+            x: Math.max(viewportWidth - scaledWidth, Math.min(0, x)),
+            y: (viewportHeight - scaledHeight) / 2
+          };
+        }
+        const minX = viewportWidth - scaledWidth;
+        const minY = viewportHeight - scaledHeight;
+        return {
+          x: Math.max(minX, Math.min(0, x)),
+          y: Math.max(minY, Math.min(0, y))
+        };
+      }
 
-      document.getElementById("leftWing").setAttribute("transform", `translate(${-wingShift}, ${wingShift * 0.4}) rotate(${wingRotate} 225 145)`);
-      document.getElementById("rightWing").setAttribute("transform", `translate(${-wingShift}, ${-wingShift * 0.4}) rotate(${-wingRotate} 225 135)`);
-      document.getElementById("body").setAttribute("transform", `scale(1 ${bodyScaleY}) translate(0 ${(1 - bodyScaleY) * 140})`);
-      document.getElementById("spine").setAttribute("transform", `scale(1 ${1 + 0.45 * controls.body_morph_pct}) translate(0 ${(-0.45 * controls.body_morph_pct) * 140})`);
-      document.getElementById("leftFlap").setAttribute("transform", `rotate(${flapRotate} 210 140)`);
-      document.getElementById("rightFlap").setAttribute("transform", `rotate(${-flapRotate} 210 140)`);
-    }
+      function applyViewportTransform() {
+        const clamped = clampPan(state.viewport.panX, state.viewport.panY, state.viewport.scale);
+        state.viewport.panX = clamped.x;
+        state.viewport.panY = clamped.y;
+        schematicCanvas.style.transform = `translate(${state.viewport.panX}px, ${state.viewport.panY}px) scale(${state.viewport.scale})`;
+      }
 
-    function syncControlInputs(controls) {
-      document.getElementById("wingMorph").value = String(Math.round(controls.wing_morph_pct * 100));
-      document.getElementById("flapDeflection").value = String(Math.round(controls.flap_deflection_deg));
-      document.getElementById("bodyMorph").value = String(Math.round(controls.body_morph_pct * 100));
-      document.getElementById("wingMorphVal").textContent = document.getElementById("wingMorph").value;
-      document.getElementById("flapVal").textContent = document.getElementById("flapDeflection").value;
-      document.getElementById("bodyMorphVal").textContent = document.getElementById("bodyMorph").value;
-    }
+      function centerOn(x, y) {
+        const viewportWidth = viewportBox.clientWidth;
+        const viewportHeight = viewportBox.clientHeight;
+        state.viewport.panX = viewportWidth / 2 - x * state.viewport.scale;
+        state.viewport.panY = viewportHeight / 2 - y * state.viewport.scale;
+        applyViewportTransform();
+      }
 
-    function summarizeTimeline(timeline, heatLimit) {
-      return {
-        max_mach: Math.max(...timeline.map(p => p.mach)),
-        max_altitude_km: Math.max(...timeline.map(p => p.altitude_m)) / 1000,
-        range_km: timeline[timeline.length - 1].downrange_m / 1000,
-        peak_heat_flux_mw_m2: Math.max(...timeline.map(p => p.heat_flux_mw_m2)),
-        min_tps_margin_mw_m2: Math.min(...timeline.map(p => p.tps_margin_mw_m2)),
-        max_ld_ratio: Math.max(...timeline.map(p => p.ld_ratio)),
-        samples: timeline.length,
-        time_over_tps_limit_pct:
-          100 * timeline.filter(p => p.heat_flux_mw_m2 > heatLimit).length / Math.max(timeline.length, 1)
-      };
-    }
+      function setZoom(scale, preserveSelection = true) {
+        state.viewport.scale = scale;
+        document.querySelectorAll(".zoom-node").forEach((node) => {
+          node.classList.toggle("active", Number(node.dataset.zoom) === scale);
+        });
+        if (preserveSelection && partMetadata[state.selectedPart]) {
+          const center = partMetadata[state.selectedPart].center;
+          centerOn(center.x, center.y);
+        } else {
+          centerOn(480, 350);
+        }
+      }
 
-    function drawLineChart(canvas, values, color, markerIndex) {
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width;
-      const h = canvas.height;
-      const pad = { left: 42, right: 18, top: 14, bottom: 24 };
-      const x0 = pad.left;
-      const y0 = h - pad.bottom;
-      const chartW = w - pad.left - pad.right;
-      const chartH = h - pad.top - pad.bottom;
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const span = (max - min) || 1;
+      function beginDrag(event) {
+        state.viewport.dragging = true;
+        viewportBox.classList.add("dragging");
+        hideTooltip();
+        state.viewport.dragOriginX = event.clientX;
+        state.viewport.dragOriginY = event.clientY;
+        state.viewport.dragStartPanX = state.viewport.panX;
+        state.viewport.dragStartPanY = state.viewport.panY;
+      }
 
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = "rgba(8,15,28,0.35)";
-      ctx.fillRect(0, 0, w, h);
+      function dragMove(event) {
+        if (!state.viewport.dragging) {
+          return;
+        }
+        state.viewport.panX = state.viewport.dragStartPanX + (event.clientX - state.viewport.dragOriginX);
+        state.viewport.panY = state.viewport.dragStartPanY + (event.clientY - state.viewport.dragOriginY);
+        applyViewportTransform();
+      }
 
-      ctx.strokeStyle = "rgba(140,180,220,0.24)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= 4; i++) {
-        const y = pad.top + (chartH / 4) * i;
+      function endDrag() {
+        state.viewport.dragging = false;
+        viewportBox.classList.remove("dragging");
+      }
+
+      function showTooltip(part, event) {
+        const meta = partMetadata[part];
+        if (!meta) {
+          return;
+        }
+        const viewportRect = viewportBox.getBoundingClientRect();
+        const x = Math.min(viewportRect.width - 220, Math.max(20, event.clientX - viewportRect.left + 18));
+        const y = Math.min(viewportRect.height - 96, Math.max(20, event.clientY - viewportRect.top - 12));
+        tooltipTitle.textContent = meta.code;
+        tooltipCopy.textContent = meta.tooltip;
+        tooltipBox.classList.add("visible");
+        tooltipBox.style.transform = `translate(${x}px, ${y}px)`;
+        tooltipBox.setAttribute("aria-hidden", "false");
+      }
+
+      function hideTooltip() {
+        tooltipBox.classList.remove("visible");
+        tooltipBox.style.transform = "translate(-9999px, -9999px)";
+        tooltipBox.setAttribute("aria-hidden", "true");
+      }
+
+      function getTelemetryFactors() {
+        const point = state.currentPoint || {
+          heat_flux_mw_m2: 0,
+          q_dyn_kpa: 0,
+          wing_morph_pct: getControlPayload().wing_morph_pct,
+          flap_deflection_deg: getControlPayload().flap_deflection_deg,
+          body_morph_pct: getControlPayload().body_morph_pct
+        };
+        return {
+          point,
+          heatNorm: Math.min(1, point.heat_flux_mw_m2 / Math.max(state.peakHeat, 0.0001)),
+          qNorm: Math.min(1, point.q_dyn_kpa / Math.max(state.peakQ, 0.0001))
+        };
+      }
+
+      function applyNodeVisual(partName, node, selected, factors) {
+        const box = node.querySelector(".part-box");
+        const textNodes = node.querySelectorAll("text");
+        const corridor = document.getElementById(partMetadata[partName].corridor);
+        node.classList.remove("alert", "secondary", "active");
+        corridor.classList.remove("active", "alert");
+
+        let stroke = "rgba(var(--bone-rgb), 0.68)";
+        let fill = "rgba(var(--slate-rgb), 0.9)";
+        let text = "var(--chalked-bone)";
+
+        if (["leftFlap", "rightFlap", "spine"].includes(partName)) {
+          node.classList.add("secondary");
+          stroke = "var(--ghost-teal)";
+          text = "var(--ghost-teal)";
+        }
+
+        if ((partName === "nose" && factors.heatNorm > 0.72) ||
+            (partName === "body" && factors.heatNorm > 0.88) ||
+            ((partName === "tailL" || partName === "tailR") && factors.point.mach > 5.2)) {
+          node.classList.add("alert");
+          corridor.classList.add("alert");
+          stroke = "var(--emergency-crimson)";
+          fill = "rgba(var(--crimson-rgb), 0.16)";
+          text = "var(--chalked-bone)";
+        }
+
+        if ((partName === "leftWing" || partName === "rightWing") && factors.qNorm > 0.44) {
+          stroke = "var(--chalked-bone)";
+        }
+
+        if (selected) {
+          node.classList.add("active");
+          corridor.classList.add("active");
+          fill = "var(--chalked-bone)";
+          stroke = "var(--chalked-bone)";
+          text = "var(--abyssal-slate)";
+        }
+
+        box.style.fill = fill;
+        box.style.stroke = stroke;
+        textNodes.forEach((textNode) => {
+          textNode.style.fill = text;
+        });
+        corridor.style.stroke = selected ? "var(--chalked-bone)" : stroke;
+      }
+
+      function refreshBlueprintStyles() {
+        const factors = getTelemetryFactors();
+        Object.keys(partMetadata).forEach((partName) => {
+          const node = document.getElementById(`part-${partName}`);
+          applyNodeVisual(partName, node, state.selectedPart === partName, factors);
+        });
+      }
+
+      function activatePart(name, shouldFocus = true) {
+        const meta = partMetadata[name];
+        if (!meta) {
+          return;
+        }
+        state.selectedPart = name;
+        document.getElementById("annotationCode").textContent = meta.code;
+        document.getElementById("partTitle").textContent = meta.title;
+        document.getElementById("partDesc").textContent = meta.desc;
+        refreshBlueprintStyles();
+        if (shouldFocus) {
+          centerOn(meta.center.x, meta.center.y);
+        }
+      }
+
+      function applyGeometryTransforms(controls) {
+        const wingShift = 34 * controls.wing_morph_pct;
+        const bodyScaleY = 1 + 0.22 * controls.body_morph_pct;
+        const flapShift = controls.flap_deflection_deg * 2.1;
+        const spineShift = 22 * controls.body_morph_pct;
+
+        document.getElementById("part-leftWing").setAttribute("transform", `translate(${-wingShift} ${-wingShift * 0.18})`);
+        document.getElementById("part-rightWing").setAttribute("transform", `translate(${-wingShift} ${wingShift * 0.18})`);
+        document.getElementById("part-body").setAttribute("transform", `translate(0 ${(1 - bodyScaleY) * 52}) scale(1 ${bodyScaleY})`);
+        document.getElementById("part-spine").setAttribute("transform", `translate(${spineShift} ${(1 - bodyScaleY) * 34}) scale(1 ${1 + 0.10 * controls.body_morph_pct})`);
+        document.getElementById("part-leftFlap").setAttribute("transform", `translate(${flapShift} ${-Math.abs(flapShift) * 0.24})`);
+        document.getElementById("part-rightFlap").setAttribute("transform", `translate(${flapShift} ${Math.abs(flapShift) * 0.24})`);
+      }
+
+      function drawLineChart(canvas, values, color, markerIndex, threshold = null) {
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+        const pad = { left: 56, right: 14, top: 10, bottom: 24 };
+        const chartW = w - pad.left - pad.right;
+        const chartH = h - pad.top - pad.bottom;
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const span = (max - min) || 1;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(21, 27, 33, 0.98)";
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = "rgba(241, 239, 234, 0.16)";
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i += 1) {
+          const y = pad.top + (chartH / 4) * i;
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(pad.left + chartW, y);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = "rgba(90, 139, 143, 0.34)";
+        for (let i = 0; i <= 6; i += 1) {
+          const x = pad.left + (chartW / 6) * i;
+          ctx.beginPath();
+          ctx.moveTo(x, pad.top);
+          ctx.lineTo(x, pad.top + chartH);
+          ctx.stroke();
+        }
+
+        if (threshold !== null) {
+          const thresholdY = pad.top + ((max - threshold) / span) * chartH;
+          ctx.strokeStyle = "#A61922";
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(pad.left, thresholdY);
+          ctx.lineTo(pad.left + chartW, thresholdY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(x0, y);
-        ctx.lineTo(x0 + chartW, y);
+        values.forEach((value, index) => {
+          const x = pad.left + (index / Math.max(values.length - 1, 1)) * chartW;
+          const y = pad.top + ((max - value) / span) * chartH;
+          if (index === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
         ctx.stroke();
+
+        const markerX = pad.left + (markerIndex / Math.max(values.length - 1, 1)) * chartW;
+        ctx.strokeStyle = "rgba(241, 239, 234, 0.82)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(markerX, pad.top);
+        ctx.lineTo(markerX, pad.top + chartH);
+        ctx.stroke();
+
+        ctx.fillStyle = "#F1EFEA";
+        ctx.font = "12px 'IBM Plex Mono'";
+        ctx.fillText(min.toFixed(2), 6, pad.top + chartH + 4);
+        ctx.fillText(max.toFixed(2), 6, pad.top + 10);
       }
 
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      values.forEach((v, i) => {
-        const x = x0 + (i / Math.max(values.length - 1, 1)) * chartW;
-        const y = pad.top + ((max - v) / span) * chartH;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
+      function renderProgram(program) {
+        const theater = program.market_requirements.theater || "UNSPECIFIED";
+        const priorities = (program.market_requirements.operator_priorities || []).slice(0, 3).join(" / ");
+        document.getElementById("programMission").textContent = `${program.market_requirements.mission} Theatre inventory: ${theater}. Priority stack: ${priorities}.`;
 
-      const markerX = x0 + (markerIndex / Math.max(values.length - 1, 1)) * chartW;
-      ctx.strokeStyle = "rgba(255,255,255,0.8)";
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(markerX, pad.top);
-      ctx.lineTo(markerX, y0);
-      ctx.stroke();
-
-      ctx.fillStyle = "rgba(222,238,255,0.9)";
-      ctx.font = "12px 'IBM Plex Mono'";
-      ctx.fillText(min.toFixed(2), 6, y0);
-      ctx.fillText(max.toFixed(2), 6, pad.top + 10);
-    }
-
-    function updateBlueprint(point) {
-      const heatNorm = Math.min(1, point.heat_flux_mw_m2 / Math.max(state.peakHeat, 0.0001));
-      const qNorm = Math.min(1, point.q_dyn_kpa / Math.max(state.peakQ, 0.0001));
-      const nose = document.getElementById("nose");
-      const body = document.getElementById("body");
-      const spine = document.getElementById("spine");
-      const leftWing = document.getElementById("leftWing");
-      const rightWing = document.getElementById("rightWing");
-      const leftFlap = document.getElementById("leftFlap");
-      const rightFlap = document.getElementById("rightFlap");
-      const tailL = document.getElementById("tailL");
-      const tailR = document.getElementById("tailR");
-
-      nose.style.fill = `hsl(${12 - 8 * heatNorm} 88% ${62 - 18 * heatNorm}%)`;
-      spine.style.fill = `hsl(${210 - 40 * qNorm} 42% ${44 + 10 * qNorm}%)`;
-      body.style.fill = `hsl(${214 - 28 * qNorm} 30% ${32 + 8 * qNorm}%)`;
-      leftWing.style.fill = `hsl(${213 - 22 * qNorm} 34% ${30 + 5 * qNorm}%)`;
-      rightWing.style.fill = leftWing.style.fill;
-      leftFlap.style.fill = `hsl(${198 - 18 * qNorm} 32% ${38 + 10 * qNorm}%)`;
-      rightFlap.style.fill = leftFlap.style.fill;
-      tailL.style.fill = `hsl(${217 - 6 * qNorm} 30% ${34 + 9 * qNorm}%)`;
-      tailR.style.fill = tailL.style.fill;
-      applyGeometryTransforms({
-        wing_morph_pct: point.wing_morph_pct || 0,
-        flap_deflection_deg: point.flap_deflection_deg || 0,
-        body_morph_pct: point.body_morph_pct || 0
-      });
-    }
-
-    function activatePart(name) {
-      document.querySelectorAll(".part").forEach(el => el.classList.remove("active"));
-      const part = document.querySelector(`[data-part="${name}"]`);
-      if (part) part.classList.add("active");
-      const details = partMetadata[name];
-      if (details) {
-        document.getElementById("partTitle").textContent = details.title;
-        document.getElementById("partDesc").textContent = details.desc;
-      }
-    }
-
-    function render(summary, timeline, options = {}) {
-      const startIndex = options.startIndex || 0;
-      const shouldAutoplay = options.autoplay !== false;
-      document.getElementById("mPeak").textContent = fmt(summary.max_mach, 2);
-      document.getElementById("mRange").textContent = fmt(summary.range_km, 1);
-      document.getElementById("mHeat").textContent = fmt(summary.peak_heat_flux_mw_m2, 3);
-      document.getElementById("mAlt").textContent = fmt(summary.max_altitude_km, 1);
-      document.getElementById("mTps").textContent = fmt(summary.min_tps_margin_mw_m2, 3);
-      document.getElementById("mLd").textContent = fmt(summary.max_ld_ratio, 2);
-
-      state.timeline = timeline;
-      state.summary = summary;
-      state.vehicle = state.vehicle || { tps_heat_limit_mw_m2: 2.5 };
-      state.peakHeat = Math.max(...timeline.map(p => p.heat_flux_mw_m2));
-      state.peakQ = Math.max(...timeline.map(p => p.q_dyn_kpa));
-
-      const slider = document.getElementById("timeline");
-      slider.max = String(Math.max(0, timeline.length - 1));
-      slider.value = String(startIndex);
-      updateAtIndex(startIndex);
-      if (shouldAutoplay) {
-        startPlayback();
-      }
-    }
-
-    function renderProgram(program) {
-      const missionText = [
-        program.market_requirements.mission,
-        `Theater: ${program.market_requirements.theater}`,
-        `Priorities: ${program.market_requirements.operator_priorities.join(", ")}`
-      ].join(" | ");
-      document.getElementById("programMission").textContent = missionText;
-
-      const claimsList = document.getElementById("claimsList");
-      claimsList.innerHTML = "";
-      program.validated_claims.slice(0, 3).forEach((item) => {
-        const li = document.createElement("li");
-        li.textContent = `${item.claim} [${item.claim_type}]`;
-        claimsList.appendChild(li);
-      });
-
-      const links = document.getElementById("artifactLinks");
-      links.innerHTML = "";
-      Object.entries(program.artifact_urls).forEach(([name, href]) => {
-        const a = document.createElement("a");
-        a.className = "artifact-link";
-        a.href = href;
-        a.target = "_blank";
-        a.rel = "noreferrer";
-        a.textContent = name.replace("_v1", "").replace(".md", "").replace(".json", "");
-        links.appendChild(a);
-      });
-
-      if (program.workspace_manifest_url) {
-        const a = document.createElement("a");
-        a.className = "artifact-link";
-        a.href = program.workspace_manifest_url;
-        a.target = "_blank";
-        a.rel = "noreferrer";
-        a.textContent = "workspace manifest";
-        links.appendChild(a);
-      }
-    }
-
-    function updateAtIndex(index) {
-      if (!state.timeline.length) return;
-      state.currentIndex = index;
-      document.getElementById("timeline").value = String(index);
-      const point = state.timeline[index];
-      syncControlInputs({
-        wing_morph_pct: point.wing_morph_pct || 0,
-        flap_deflection_deg: point.flap_deflection_deg || 0,
-        body_morph_pct: point.body_morph_pct || 0
-      });
-      document.getElementById("timelineLabel").textContent =
-        `t=${fmt(point.t_s, 1)}s | Mach ${fmt(point.mach, 2)} | Heat ${fmt(point.heat_flux_mw_m2, 3)} MW/m²`;
-
-      drawLineChart(
-        document.getElementById("altChart"),
-        state.timeline.map(p => p.altitude_m / 1000),
-        "#60b8ff",
-        index
-      );
-      drawLineChart(
-        document.getElementById("machChart"),
-        state.timeline.map(p => p.mach),
-        "#73f4c3",
-        index
-      );
-      drawLineChart(
-        document.getElementById("heatChart"),
-        state.timeline.map(p => p.heat_flux_mw_m2),
-        "#ff8f62",
-        index
-      );
-
-      updateBlueprint(point);
-    }
-
-    document.getElementById("timeline").addEventListener("input", (event) => {
-      updateAtIndex(Number(event.target.value));
-    });
-
-    document.getElementById("playPauseBtn").addEventListener("click", togglePlayback);
-    document.getElementById("applyMidflightBtn").addEventListener("click", applyMidflightChanges);
-
-    document.querySelectorAll(".part").forEach(part => {
-      part.addEventListener("mouseenter", () => activatePart(part.dataset.part));
-      part.addEventListener("click", () => activatePart(part.dataset.part));
-    });
-
-    async function runSimulation() {
-      stopPlayback();
-      setStatus("running simulation...");
-      const payload = {
-        duration_s: Number(document.getElementById("duration").value),
-        dt_s: Number(document.getElementById("dt").value),
-        initial_altitude_m: Number(document.getElementById("altitude").value),
-        initial_mach: Number(document.getElementById("mach").value),
-        initial_gamma_deg: Number(document.getElementById("gamma").value),
-        ...getControlPayload()
-      };
-
-      try {
-        const apiBase = window.location.origin && window.location.origin.startsWith("http")
-          ? window.location.origin
-          : "http://127.0.0.1:8000";
-        const response = await fetch(new URL("/api/simulate", apiBase).toString(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+        const links = document.getElementById("artifactLinks");
+        links.innerHTML = "";
+        const artifactEntries = Object.entries(program.artifact_urls || {}).slice(0, 6);
+        artifactEntries.forEach(([name, href], index) => {
+          const a = document.createElement("a");
+          a.className = "artifact-link";
+          a.href = href;
+          a.target = "_blank";
+          a.rel = "noreferrer";
+          a.textContent = `${String(index + 1).padStart(2, "0")} / ${name.replace("_v1", "").replace(".md", "").replace(".json", "")}`;
+          links.appendChild(a);
         });
-        if (!response.ok) {
-          throw new Error(`Simulation API failed (${response.status})`);
+
+        if (program.workspace_manifest_url) {
+          const a = document.createElement("a");
+          a.className = "artifact-link";
+          a.href = program.workspace_manifest_url;
+          a.target = "_blank";
+          a.rel = "noreferrer";
+          a.textContent = "07 / WORKSPACE MANIFEST";
+          links.appendChild(a);
         }
-        const data = await response.json();
-        state.vehicle = data.vehicle;
-        render(data.summary, data.timeline, { startIndex: 0, autoplay: true });
-        setStatus(`ready | ${data.timeline.length} samples | looping`);
-        activatePart("body");
-      } catch (err) {
-        setStatus(`error: ${err.message}`);
       }
-    }
 
-    async function applyMidflightChanges() {
-      if (!state.timeline.length) {
-        setStatus("error: no flight state to continue from");
-        return;
+      function updateVehicleIndex(vehicle) {
+        document.getElementById("vehicleSpan").textContent = `${fmt(vehicle.span_m, 1)}M / ${fmt(vehicle.length_m, 1)}M`;
+        document.getElementById("vehicleHeatLimit").textContent = `${fmt(vehicle.tps_heat_limit_mw_m2, 2)} MW/M²`;
       }
-      stopPlayback();
-      setStatus("applying in-flight morph changes...");
-      const point = state.timeline[state.currentIndex];
-      const payload = {
-        duration_s: Number(document.getElementById("duration").value),
-        dt_s: Number(document.getElementById("dt").value),
-        state: {
-          t_s: point.t_s,
-          altitude_m: point.altitude_m,
-          downrange_m: point.downrange_m,
-          velocity_m_s: point.velocity_m_s,
-          gamma_deg: point.gamma_deg
-        },
-        ...getControlPayload()
-      };
 
-      try {
-        const apiBase = window.location.origin && window.location.origin.startsWith("http")
-          ? window.location.origin
-          : "http://127.0.0.1:8000";
-        const response = await fetch(new URL("/api/continue", apiBase).toString(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+      function updateAtIndex(index) {
+        if (!state.timeline.length) {
+          return;
+        }
+        state.currentIndex = index;
+        document.getElementById("timeline").value = String(index);
+        const point = state.timeline[index];
+        state.currentPoint = point;
+        syncControlInputs({
+          wing_morph_pct: point.wing_morph_pct || 0,
+          flap_deflection_deg: point.flap_deflection_deg || 0,
+          body_morph_pct: point.body_morph_pct || 0
         });
-        if (!response.ok) {
-          throw new Error(`Continuation API failed (${response.status})`);
-        }
-        const data = await response.json();
-        state.vehicle = data.vehicle;
-        const merged = state.timeline
-          .slice(0, state.currentIndex + 1)
-          .concat(data.timeline.slice(1));
-        const nextIndex = Math.min(state.currentIndex + 1, merged.length - 1);
-        const summary = summarizeTimeline(merged, data.vehicle.tps_heat_limit_mw_m2);
-        render(summary, merged, { startIndex: nextIndex, autoplay: true });
-        setStatus(`ready | continued from t=${fmt(point.t_s, 1)}s | looping`);
-      } catch (err) {
-        setStatus(`error: ${err.message}`);
-      }
-    }
+        document.getElementById("timelineLabel").textContent = `T+${fmt(point.t_s, 1)} // MACH ${fmt(point.mach, 2)} // HEAT ${fmt(point.heat_flux_mw_m2, 3)} // Q ${fmt(point.q_dyn_kpa, 1)} KPA`;
 
-    async function fetchProgram() {
-      try {
-        const apiBase = window.location.origin && window.location.origin.startsWith("http")
-          ? window.location.origin
-          : "http://127.0.0.1:8000";
-        const response = await fetch(new URL("/api/program", apiBase).toString());
-        if (!response.ok) {
-          throw new Error(`Program API failed (${response.status})`);
-        }
-        const data = await response.json();
-        renderProgram(data);
-      } catch (err) {
-        document.getElementById("programMission").textContent = `Program data unavailable: ${err.message}`;
-      }
-    }
+        drawLineChart(
+          document.getElementById("altChart"),
+          state.timeline.map((p) => p.altitude_m / 1000),
+          "#F1EFEA",
+          index
+        );
+        drawLineChart(
+          document.getElementById("machChart"),
+          state.timeline.map((p) => p.mach),
+          "#5A8B8F",
+          index
+        );
+        drawLineChart(
+          document.getElementById("heatChart"),
+          state.timeline.map((p) => p.heat_flux_mw_m2),
+          "#F1EFEA",
+          index,
+          state.vehicle ? state.vehicle.tps_heat_limit_mw_m2 : null
+        );
 
-    document.getElementById("runBtn").addEventListener("click", runSimulation);
-    setStatus(`ready | api ${window.location.origin || "http://127.0.0.1:8000"}`);
-    updatePlaybackButton();
-    fetchProgram();
-    runSimulation();
+        applyGeometryTransforms({
+          wing_morph_pct: point.wing_morph_pct || 0,
+          flap_deflection_deg: point.flap_deflection_deg || 0,
+          body_morph_pct: point.body_morph_pct || 0
+        });
+        refreshBlueprintStyles();
+      }
+
+      function render(summary, timeline, options = {}) {
+        const startIndex = options.startIndex || 0;
+        const shouldAutoplay = options.autoplay !== false;
+
+        document.getElementById("mPeak").textContent = fmt(summary.max_mach, 2);
+        document.getElementById("mRange").textContent = fmt(summary.range_km, 1);
+        document.getElementById("mHeat").textContent = fmt(summary.peak_heat_flux_mw_m2, 3);
+        document.getElementById("mAlt").textContent = fmt(summary.max_altitude_km, 1);
+        document.getElementById("mTps").textContent = fmt(summary.min_tps_margin_mw_m2, 3);
+        document.getElementById("mLd").textContent = fmt(summary.max_ld_ratio, 2);
+
+        state.timeline = timeline;
+        state.summary = summary;
+        state.peakHeat = Math.max(...timeline.map((p) => p.heat_flux_mw_m2));
+        state.peakQ = Math.max(...timeline.map((p) => p.q_dyn_kpa));
+
+        const slider = document.getElementById("timeline");
+        slider.max = String(Math.max(0, timeline.length - 1));
+        slider.value = String(startIndex);
+        updateAtIndex(startIndex);
+        if (shouldAutoplay) {
+          startPlayback();
+        }
+      }
+
+      async function runSimulation() {
+        stopPlayback();
+        setStatus("SCAN ACTIVE", "NODE 01 / CYCLE IN PROGRESS");
+        const payload = {
+          duration_s: Number(document.getElementById("duration").value),
+          dt_s: Number(document.getElementById("dt").value),
+          initial_altitude_m: Number(document.getElementById("altitude").value),
+          initial_mach: Number(document.getElementById("mach").value),
+          initial_gamma_deg: Number(document.getElementById("gamma").value),
+          ...getControlPayload()
+        };
+
+        try {
+          const apiBase = window.location.origin && window.location.origin.startsWith("http")
+            ? window.location.origin
+            : "http://127.0.0.1:8000";
+          const response = await fetch(new URL("/api/simulate", apiBase).toString(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) {
+            throw new Error(`SIM ${response.status}`);
+          }
+          const data = await response.json();
+          state.vehicle = data.vehicle;
+          updateVehicleIndex(data.vehicle);
+          render(data.summary, data.timeline, { startIndex: 0, autoplay: true });
+          setStatus("SCAN RESOLVED", `${data.timeline.length} FRAMES / LOOP CLOSED`);
+          activatePart(state.selectedPart || "body", false);
+        } catch (error) {
+          setStatus("SIM FAULT", error.message);
+        }
+      }
+
+      async function applyMidflightChanges() {
+        if (!state.timeline.length) {
+          setStatus("PATCH REJECTED", "NO LIVE FRAME AVAILABLE");
+          return;
+        }
+        stopPlayback();
+        setStatus("PATCH ACTIVE", "MID-FLIGHT RECOMPILATION");
+        const point = state.timeline[state.currentIndex];
+        const payload = {
+          duration_s: Number(document.getElementById("duration").value),
+          dt_s: Number(document.getElementById("dt").value),
+          state: {
+            t_s: point.t_s,
+            altitude_m: point.altitude_m,
+            downrange_m: point.downrange_m,
+            velocity_m_s: point.velocity_m_s,
+            gamma_deg: point.gamma_deg
+          },
+          ...getControlPayload()
+        };
+
+        try {
+          const apiBase = window.location.origin && window.location.origin.startsWith("http")
+            ? window.location.origin
+            : "http://127.0.0.1:8000";
+          const response = await fetch(new URL("/api/continue", apiBase).toString(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) {
+            throw new Error(`PATCH ${response.status}`);
+          }
+          const data = await response.json();
+          state.vehicle = data.vehicle;
+          updateVehicleIndex(data.vehicle);
+          const merged = state.timeline.slice(0, state.currentIndex + 1).concat(data.timeline.slice(1));
+          const nextIndex = Math.min(state.currentIndex + 1, merged.length - 1);
+          const summary = summarizeTimeline(merged, data.vehicle.tps_heat_limit_mw_m2);
+          render(summary, merged, { startIndex: nextIndex, autoplay: true });
+          setStatus("PATCH RESOLVED", `RESUMED FROM T+${fmt(point.t_s, 1)}`);
+        } catch (error) {
+          setStatus("PATCH FAULT", error.message);
+        }
+      }
+
+      async function fetchProgram() {
+        try {
+          const apiBase = window.location.origin && window.location.origin.startsWith("http")
+            ? window.location.origin
+            : "http://127.0.0.1:8000";
+          const response = await fetch(new URL("/api/program", apiBase).toString());
+          if (!response.ok) {
+            throw new Error(`ARCHIVE ${response.status}`);
+          }
+          const data = await response.json();
+          renderProgram(data);
+        } catch (error) {
+          document.getElementById("programMission").textContent = `ARCHIVE BUS UNAVAILABLE. ${error.message}`;
+        }
+      }
+
+      document.querySelectorAll(".part-node").forEach((node) => {
+        const part = node.dataset.part;
+        node.addEventListener("mouseenter", (event) => {
+          showTooltip(part, event);
+          document.getElementById(partMetadata[part].corridor).classList.add("active");
+        });
+        node.addEventListener("mousemove", (event) => showTooltip(part, event));
+        node.addEventListener("mouseleave", () => {
+          hideTooltip();
+          if (state.selectedPart !== part) {
+            document.getElementById(partMetadata[part].corridor).classList.remove("active");
+            refreshBlueprintStyles();
+          }
+        });
+        node.addEventListener("click", () => {
+          activatePart(part, true);
+        });
+      });
+
+      viewportBox.addEventListener("pointerdown", (event) => {
+        if (event.target.closest(".part-node")) {
+          return;
+        }
+        beginDrag(event);
+      });
+      window.addEventListener("pointermove", dragMove);
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
+
+      document.querySelectorAll(".zoom-node").forEach((button) => {
+        button.addEventListener("click", () => {
+          setZoom(Number(button.dataset.zoom));
+        });
+      });
+
+      document.getElementById("timeline").addEventListener("input", (event) => {
+        updateAtIndex(Number(event.target.value));
+      });
+      document.getElementById("runBtn").addEventListener("click", runSimulation);
+      document.getElementById("applyMidflightBtn").addEventListener("click", applyMidflightChanges);
+      document.getElementById("playPauseBtn").addEventListener("click", togglePlayback);
+      document.getElementById("resetViewBtn").addEventListener("click", () => {
+        activatePart(state.selectedPart || "body", true);
+      });
+
+      updatePlaybackButton();
+      schematicCanvas.classList.add("booted");
+      setZoom(0.5, false);
+      activatePart("body", true);
+      setStatus("ARCHIVE READY", window.location.origin || "LOCAL HOST");
+      fetchProgram();
+      runSimulation();
+
+      window.addEventListener("resize", () => {
+        if (partMetadata[state.selectedPart]) {
+          centerOn(partMetadata[state.selectedPart].center.x, partMetadata[state.selectedPart].center.y);
+        } else {
+          applyViewportTransform();
+        }
+      });
     });
   </script>
 </body>
